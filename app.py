@@ -45,17 +45,23 @@ def calcular_precio(tipo, distancia):
 # 🌍 Obtener distancia desde Google Maps
 def obtener_distancia(origen, destino):
     if not API_KEY:
-        return 10  # fallback si no hay API
+        return 10, "15 mins"  # fallback
 
     try:
         url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origen}&destinations={destino}&units=imperial&key={API_KEY}"
         response = requests.get(url).json()
 
-        metros = response['rows'][0]['elements'][0]['distance']['value']
-        return round(metros / 1609.34, 1)
+        elemento = response['rows'][0]['elements'][0]
+
+        metros = elemento['distance']['value']
+        millas = metros / 1609.34
+
+        duracion = elemento['duration']['text']  # 👈 NUEVO
+
+        return millas, duracion
 
     except:
-        return 10  # fallback si falla la API
+        return 10, "15 mins"
 # 🏠 Ruta principal
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -67,10 +73,10 @@ def index():
         destino = request.form["destino"]
         tipo = request.form["tipo"]
 
-        distancia = obtener_distancia(origen, destino)
+        distancia, duracion = obtener_distancia(origen, destino)
         precio = calcular_precio(tipo, distancia)
 
-    return render_template("index.html", precio=precio, distancia=distancia)
+    return render_template("index.html", precio=precio, distancia=distancia, duracion=duracion)
 
 # ▶️ Ejecutar app
 if __name__ == "__main__":
