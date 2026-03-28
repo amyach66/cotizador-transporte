@@ -67,16 +67,23 @@ def obtener_distancia(origen, destino):
 def index():
     precio = None
     distancia = None
+    duracion = None  # 👈 ESTO ES LA CLAVE
 
     if request.method == "POST":
-        origen = request.form["origen"]
-        destino = request.form["destino"]
-        tipo = request.form["tipo"]
+        origen = request.form.get("origen")
+        destino = request.form.get("destino")
+        tipo = request.form.get("tipo")
 
-        distancia, duracion = obtener_distancia(origen, destino)
-        precio = calcular_precio(tipo, distancia)
+        if origen and destino and tipo:
+            distancia, duracion = obtener_distancia(origen, destino)
+            precio = calcular_precio(tipo, distancia)
 
-    return render_template("index.html", precio=precio, distancia=distancia, duracion=duracion)
+    return render_template(
+        "index.html",
+        precio=precio,
+        distancia=distancia,
+        duracion=duracion
+    )
 
 # ▶️ Ejecutar app
 if __name__ == "__main__":
