@@ -96,7 +96,13 @@
 
     <div class="card">
 
-        <form method="POST">
+    {% if error %}
+    <div style="background:#7f1d1d; padding:10px; border-radius:8px; margin-bottom:10px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST">
 
             <button type="button" class="location-btn" onclick="usarUbicacion()">
                 📍 Use my location
