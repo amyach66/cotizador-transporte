@@ -4,8 +4,9 @@ import requests
 
 app = Flask(__name__)
 
-# 🔑 PON AQUÍ TU API KEY DE GOOGLE (puedes dejarlo vacío por ahora)
+# 🔑 API KEY desde variables de entorno
 API_KEY = os.environ.get("API_KEY")
+
 # 📊 Tarifas base
 base_rates = {
     "Business": {"base": 70, "min": 40},
@@ -15,24 +16,25 @@ base_rates = {
 # 🛣️ Tramos por tipo
 tiers = {
     "Business": [
-        (0,5,0.9),
-        (5,100,1.1),
-        (100,200,1.1),
-        (200,300,1.1),
-        (300,5000,1.2)
+        (0, 5, 0.9),
+        (5, 100, 1.1),
+        (100, 200, 1.1),
+        (200, 300, 1.1),
+        (300, 5000, 1.2)
     ],
     "Van": [
-        (0,5,1.2),
-        (5,100,1.2),
-        (100,200,1.5),
-        (200,300,1.75),
-        (300,5000,2)
+        (0, 5, 1.2),
+        (5, 100, 1.2),
+        (100, 200, 1.5),
+        (200, 300, 1.75),
+        (300, 5000, 2)
     ]
 }
 
 # 🧮 Calcular precio
 def calcular_precio(tipo, distancia):
     total = 0
+
     for desde, hasta, precio in tiers[tipo]:
         if distancia > desde:
             millas = min(distancia, hasta) - desde
@@ -40,40 +42,64 @@ def calcular_precio(tipo, distancia):
 
     total += base_rates[tipo]["base"]
     total = max(total, base_rates[tipo]["min"])
+
     return round(total, 2)
 
 # 🌍 Obtener distancia desde Google Maps
 def obtener_distancia(origen, destino):
     if not API_KEY:
-        return 10, "15 mins"  # fallback
+        print("⚠️ API KEY no configurada")
+        return 10, "15 mins"
 
     try:
-        url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origen}&destinations={destino}&units=imperial&key={API_KEY}"
-        response = requests.get(url).json()
+        url = "https://maps.googleapis.com/maps/api/distancematrix/json"
 
-        elemento = response['rows'][0]['elements'][0]
+        params = {
+            "origins": origen,
+            "destinations": destino,
+            "units": "imperial",
+            "key": API_KEY
+        }
+
+        response = requests.get(url, params=params)
+        data = response.json()
+
+        if data["status"] != "OK":
+            print("❌ Error API:", data)
+            return 10, "15 mins"
+
+        elemento = data['rows'][0]['elements'][0]
+
+        if elemento["status"] != "OK":
+            print("❌ Ruta no válida")
+            return 10, "15 mins"
 
         metros = elemento['distance']['value']
         millas = metros / 1609.34
 
-        duracion = elemento['duration']['text']  # 👈 NUEVO
+        duracion = elemento['duration']['text']
 
         return millas, duracion
 
-    except:
+    except Exception as e:
+        print("❌ ERROR:", e)
         return 10, "15 mins"
+
 # 🏠 Ruta principal
 @app.route("/", methods=["GET", "POST"])
 def index():
     precio = None
     distancia = None
-    duracion = None  # 👈 ESTO ES LA CLAVE
+    duracion = None
 
     if request.method == "POST":
         origen = request.form.get("origen")
         destino = request.form.get("destino")
         tipo = request.form.get("tipo")
 
+        print("📥 Datos recibidos:", origen, destino, tipo)
+
+        # 🔒 Validación (esto evita el 400)
         if origen and destino and tipo:
             distancia, duracion = obtener_distancia(origen, destino)
             precio = calcular_precio(tipo, distancia)
@@ -87,4 +113,4 @@ def index():
 
 # ▶️ Ejecutar app
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
