@@ -52,7 +52,7 @@ def obtener_distancia(origen, destino):
         response = requests.get(url).json()
 
         metros = response['rows'][0]['elements'][0]['distance']['value']
-        return metros / 1609.34
+        return round(metros / 1609.34, 1)
 
     except:
         return 10  # fallback si falla la API
