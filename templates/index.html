@@ -62,6 +62,7 @@
     {% if precio %}
     <div class="resultado">
         <h3>Distancia: {{ "%.1f"|format(distancia) }} mi</h3>
+        <h3>Tiempo estimado: {{ duracion }}</h3>
         <h2>Precio: ${{ precio }}</h2>
     </div>
     {% endif %}
