@@ -21,7 +21,7 @@
 </form>
 
 {% if precio %}
-    <h3>Distancia: {{ distancia }} millas</h3>
+    <h3>Distance: {{ "%.1f"|format(distancia) }} mi</h3>
     <h3>Precio: ${{ precio }}</h3>
 {% endif %}
 

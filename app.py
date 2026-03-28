@@ -8,23 +8,25 @@ app = Flask(__name__)
 API_KEY = os.environ.get("API_KEY")
 # 📊 Tarifas base
 base_rates = {
-    "Business": {"base": 15, "min": 40},
-    "Van": {"base": 25, "min": 60}
+    "Business": {"base": 70, "min": 40},
+    "Van": {"base": 75, "min": 60}
 }
 
 # 🛣️ Tramos por tipo
 tiers = {
     "Business": [
-        (0,5,2.0),
-        (5,10,1.8),
-        (10,20,1.5),
-        (20,999,1.2)
+        (0,5,0.9),
+        (5,100,1.1),
+        (100,200,1.1),
+        (200,300,1.1),
+        (300,5000,1.2)
     ],
     "Van": [
-        (0,5,2.5),
-        (5,10,2.2),
-        (10,20,1.9),
-        (20,999,1.6)
+        (0,5,1.2),
+        (5,100,1.2),
+        (100,200,1.5),
+        (200,300,1.75),
+        (300,5000,2)
     ]
 }
 
@@ -51,16 +53,9 @@ def obtener_distancia(origen, destino):
 
         metros = response['rows'][0]['elements'][0]['distance']['value']
         return metros / 1609.34
+
     except:
         return 10  # fallback si falla la API
-
-    url = f"https://maps.googleapis.com/maps/api/distancematrix/json?origins={origen}&destinations={destino}&units=imperial&key={API_KEY}"
-    response = requests.get(url).json()
-
-    metros = response['rows'][0]['elements'][0]['distance']['value']
-    millas = metros / 1609.34
-    return millas
-
 # 🏠 Ruta principal
 @app.route("/", methods=["GET", "POST"])
 def index():
