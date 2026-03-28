@@ -1,35 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cotizador</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background-color: #0b1a2f;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
+
+        .container {
+            margin-top: 100px;
+        }
+
+        input, select {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            width: 250px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #22c55e;
+            color: white;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .resultado {
+            margin-top: 30px;
+        }
+    </style>
 </head>
+
 <body>
 
-<h1 style="text-align:center;">🚐 Cotizador de Transporte</h1>
+<div class="container">
 
-<form method="POST">
+    <h1>🚐 Cotizador de Transporte</h1>
 
-<input type="text" name="origen" placeholder="Pickup"
-value="{{ request.form.origen }}" required><br><br>
+    <form method="POST">
 
-<input type="text" name="destino" placeholder="Dropoff"
-value="{{ request.form.destino }}" required><br><br>
+        <input type="text" name="origen" placeholder="Pickup"
+        value="{{ request.form.origen }}" required><br>
 
-<select name="tipo">
-    <option value="Business" {% if request.form.tipo == "Business" %}selected{% endif %}>Business</option>
-    <option value="Van" {% if request.form.tipo == "Van" %}selected{% endif %}>Van</option>
-</select><br><br>
+        <input type="text" name="destino" placeholder="Dropoff"
+        value="{{ request.form.destino }}" required><br>
 
-<button type="submit">Calcular</button>
+        <select name="tipo">
+            <option value="Business" {% if request.form.tipo == "Business" %}selected{% endif %}>Business</option>
+            <option value="Van" {% if request.form.tipo == "Van" %}selected{% endif %}>Van</option>
+        </select><br><br>
 
-</form>
+        <button type="submit">Calcular</button>
 
-{% if precio %}
-    <div style="text-align:center; margin-top:20px;">
+    </form>
+
+    {% if precio %}
+    <div class="resultado">
         <h3>Distancia: {{ "%.1f"|format(distancia) }} mi</h3>
         <h2>Precio: ${{ precio }}</h2>
     </div>
-{% endif %}
+    {% endif %}
+
+</div>
+
 </body>
 </html>
