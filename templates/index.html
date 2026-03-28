@@ -124,42 +124,45 @@ function initMap() {
     directionsRenderer = new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);
 
-    // AUTOCOMPLETE
-    new google.maps.places.Autocomplete(origenInput);
-    new google.maps.places.Autocomplete(destinoInput);
-}
+    // 🔥 AUTOCOMPLETE MEJORADO
+    const origenAutocomplete = new google.maps.places.Autocomplete(origenInput);
+    const destinoAutocomplete = new google.maps.places.Autocomplete(destinoInput);
 
-// RUTA
-function calcularRuta() {
-    const origen = document.getElementById("origen").value;
-    const destino = document.getElementById("destino").value;
+    // 🚀 CUANDO SELECCIONAN DIRECCIÓN → DIBUJA RUTA
+    origenAutocomplete.addListener("place_changed", calcularRuta);
+    destinoAutocomplete.addListener("place_changed", calcularRuta);
+   }
 
-    if (!origen || !destino) return;
+   // 🚗 DIBUJAR RUTA
+    function calcularRuta() {
+    if (!directionsService || !directionsRenderer) return;
 
-    directionsService.route({
-        origin: origen,
-        destination: destino,
-        travelMode: 'DRIVING'
-    }, function(result, status) {
-        if (status === 'OK') {
+     const origen = document.getElementById("origen").value;
+     const destino = document.getElementById("destino").value;
+
+     if (!origen || !destino) return;
+
+     directionsService.route({
+         origin: origen,
+         destination: destino,
+         travelMode: google.maps.TravelMode.DRIVING}, 
+         function(result, status) {
+         if (status === "OK") {
             directionsRenderer.setDirections(result);
+        } else {
+            console.error("Error ruta:", status);
         }
-    });
-}
+     });
+     }
 
-// GEOLOCATION
-function usarUbicacion() {
-    navigator.geolocation.getCurrentPosition(function(position) {
-        document.getElementById("origen").value =
+      // 📍 GEOLOCATION
+        function usarUbicacion() {
+         navigator.geolocation.getCurrentPosition(function(position) {
+         document.getElementById("origen").value =
             position.coords.latitude + "," + position.coords.longitude;
-    });
-}
-
-// DIBUJAR RUTA DESPUÉS DEL POST
-document.querySelector("form").addEventListener("submit", function() {
-    setTimeout(calcularRuta, 500);
-});
-</script>
+         });
+           }
+        </script>
 
 </body>
 </html>
