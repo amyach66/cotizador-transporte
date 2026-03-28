@@ -1,73 +1,156 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <title>Amyach Logistics</title>
+
     <style>
         body {
-            background-color: #0b1a2f;
+            background: linear-gradient(135deg, #0b1a2f, #111827);
+            font-family: 'Segoe UI', sans-serif;
             color: white;
-            font-family: Arial;
             text-align: center;
         }
 
         .container {
-            margin-top: 100px;
+            margin-top: 80px;
         }
 
-        input, select {
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            width: 250px;
+        h1 {
+            font-size: 32px;
             margin-bottom: 10px;
         }
 
-        button {
-            background-color: #22c55e;
+        p {
+            color: #9ca3af;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: #1f2937;
+            padding: 30px;
+            border-radius: 15px;
+            width: 320px;
+            margin: auto;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: none;
+            background: #374151;
             color: white;
-            padding: 10px 30px;
+        }
+
+        input::placeholder {
+            color: #9ca3af;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #22c55e;
             border: none;
             border-radius: 8px;
+            color: white;
+            font-weight: bold;
             cursor: pointer;
         }
 
+        .location-btn {
+            background: #2563eb;
+            margin-bottom: 10px;
+        }
+
         .resultado {
-            margin-top: 30px;
+            margin-top: 25px;
+            padding: 20px;
+            background: #111827;
+            border-radius: 12px;
+        }
+
+        .precio {
+            font-size: 26px;
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        .detalle {
+            font-size: 14px;
+            color: #9ca3af;
         }
     </style>
+
+    <!-- Google Places -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places"></script>
 </head>
 
 <body>
 
 <div class="container">
 
-    <h1>🚐 Instant Ride Quote</h1>
+    <h1>Luxury Ride Quote</h1>
+    <p>Amyach Logistics</p>
 
-    <form method="POST">
+    <div class="card">
 
-        <input type="text" name="origen" placeholder="Pickup"
-        value="{{ request.form.origen }}" required><br>
+        <form method="POST">
 
-        <input type="text" name="destino" placeholder="Dropoff"
-        value="{{ request.form.destino }}" required><br>
+            <button type="button" class="location-btn" onclick="usarUbicacion()">
+                📍 Use my location
+            </button>
 
-        <select name="tipo">
-            <option value="Business" {% if request.form.tipo == "Business" %}selected{% endif %}>Business</option>
-            <option value="Van" {% if request.form.tipo == "Van" %}selected{% endif %}>Van</option>
-        </select><br><br>
+            <input id="origen" type="text" name="origen" placeholder="Pickup location"
+            value="{{ request.form.origen }}" required>
 
-        <button type="submit">Calcular</button>
+            <input id="destino" type="text" name="destino" placeholder="Dropoff location"
+            value="{{ request.form.destino }}" required>
 
-    </form>
+            <select name="tipo">
+                <option value="Business" {% if request.form.tipo == "Business" %}selected{% endif %}>Business</option>
+                <option value="Van" {% if request.form.tipo == "Van" %}selected{% endif %}>Van</option>
+            </select>
 
-    {% if precio %}
-    <div class="resultado">
-        <h3>Distancia: {{ "%.1f"|format(distancia) }} mi</h3>
-        <h3>Tiempo estimado: {{ duracion }}</h3>
-        <h2>Precio: ${{ precio }}</h2>
+            <button type="submit">Calculate Price</button>
+
+        </form>
+
+        {% if precio %}
+        <div class="resultado">
+            <div class="detalle">Distance: {{ "%.1f"|format(distancia) }} mi</div>
+            <div class="detalle">Estimated time: {{ duracion }}</div>
+            <div class="precio">${{ precio }}</div>
+        </div>
+        {% endif %}
+
     </div>
-    {% endif %}
 
 </div>
+
+<!-- AUTOCOMPLETE -->
+<script>
+function initAutocomplete() {
+    const origen = document.getElementById("origen");
+    const destino = document.getElementById("destino");
+
+    new google.maps.places.Autocomplete(origen);
+    new google.maps.places.Autocomplete(destino);
+}
+
+google.maps.event.addDomListener(window, 'load', initAutocomplete);
+
+// GEOLOCATION
+function usarUbicacion() {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        document.getElementById("origen").value = lat + "," + lng;
+    });
+}
+</script>
 
 </body>
 </html>
