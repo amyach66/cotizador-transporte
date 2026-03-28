@@ -1,116 +1,161 @@
-import os
-from flask import Flask, render_template, request
-import requests
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amyach Logistics</title>
 
-app = Flask(__name__)
-
-# 🔑 API KEY desde variables de entorno
-API_KEY = os.environ.get("API_KEY")
-
-# 📊 Tarifas base
-base_rates = {
-    "Business": {"base": 70, "min": 40},
-    "Van": {"base": 75, "min": 60}
-}
-
-# 🛣️ Tramos por tipo
-tiers = {
-    "Business": [
-        (0, 5, 0.9),
-        (5, 100, 1.1),
-        (100, 200, 1.1),
-        (200, 300, 1.1),
-        (300, 5000, 1.2)
-    ],
-    "Van": [
-        (0, 5, 1.2),
-        (5, 100, 1.2),
-        (100, 200, 1.5),
-        (200, 300, 1.75),
-        (300, 5000, 2)
-    ]
-}
-
-# 🧮 Calcular precio
-def calcular_precio(tipo, distancia):
-    total = 0
-
-    for desde, hasta, precio in tiers[tipo]:
-        if distancia > desde:
-            millas = min(distancia, hasta) - desde
-            total += millas * precio
-
-    total += base_rates[tipo]["base"]
-    total = max(total, base_rates[tipo]["min"])
-
-    return round(total, 2)
-
-# 🌍 Obtener distancia desde Google Maps
-def obtener_distancia(origen, destino):
-    if not API_KEY:
-        print("⚠️ API KEY no configurada")
-        return 10, "15 mins"
-
-    try:
-        url = "https://maps.googleapis.com/maps/api/distancematrix/json"
-
-        params = {
-            "origins": origen,
-            "destinations": destino,
-            "units": "imperial",
-            "key": API_KEY
+    <style>
+        body {
+            background: linear-gradient(135deg, #0b1a2f, #111827);
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            text-align: center;
         }
 
-        response = requests.get(url, params=params)
-        data = response.json()
+        .container {
+            margin-top: 80px;
+        }
 
-        if data["status"] != "OK":
-            print("❌ Error API:", data)
-            return 10, "15 mins"
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
 
-        elemento = data['rows'][0]['elements'][0]
+        p {
+            color: #9ca3af;
+            margin-bottom: 30px;
+        }
 
-        if elemento["status"] != "OK":
-            print("❌ Ruta no válida")
-            return 10, "15 mins"
+        .card {
+            background: #1f2937;
+            padding: 30px;
+            border-radius: 15px;
+            width: 320px;
+            margin: auto;
+            box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
+        }
 
-        metros = elemento['distance']['value']
-        millas = metros / 1609.34
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: none;
+            background: #374151;
+            color: white;
+        }
 
-        duracion = elemento['duration']['text']
+        input::placeholder {
+            color: #9ca3af;
+        }
 
-        return millas, duracion
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #22c55e;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-    except Exception as e:
-        print("❌ ERROR:", e)
-        return 10, "15 mins"
+        .location-btn {
+            background: #2563eb;
+            margin-bottom: 10px;
+        }
 
-# 🏠 Ruta principal
-@app.route("/", methods=["GET", "POST"])
-def index():
-    precio = None
-    distancia = None
-    duracion = None
+        .resultado {
+            margin-top: 25px;
+            padding: 20px;
+            background: #111827;
+            border-radius: 12px;
+        }
 
-    if request.method == "POST":
-        origen = request.form.get("origen")
-        destino = request.form.get("destino")
-        tipo = request.form.get("tipo")
+        .precio {
+            font-size: 26px;
+            color: #22c55e;
+            font-weight: bold;
+        }
 
-        print("📥 Datos recibidos:", origen, destino, tipo)
+        .detalle {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+    </style>
 
-        # 🔒 Validación (esto evita el 400)
-        if origen and destino and tipo:
-            distancia, duracion = obtener_distancia(origen, destino)
-            precio = calcular_precio(tipo, distancia)
+    <!-- ✅ GOOGLE MAPS CORRECTO -->
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initAutocomplete">
+    </script>
+</head>
 
-    return render_template(
-        "index.html",
-        precio=precio,
-        distancia=distancia,
-        duracion=duracion
-    )
+<body>
 
-# ▶️ Ejecutar app
-if __name__ == "__main__":
-    app.run(debug=True)
+<div class="container">
+
+    <h1>Luxury Ride Quote</h1>
+    <p>Amyach Logistics</p>
+
+    <div class="card">
+
+        <form method="POST">
+
+            <button type="button" class="location-btn" onclick="usarUbicacion()">
+                📍 Use my location
+            </button>
+
+            <input id="origen" type="text" name="origen"
+            placeholder="Pickup location"
+            value="{{ request.form.origen }}" required>
+
+            <input id="destino" type="text" name="destino"
+            placeholder="Dropoff location"
+            value="{{ request.form.destino }}" required>
+
+            <select name="tipo">
+                <option value="Business" {% if request.form.tipo == "Business" %}selected{% endif %}>Business</option>
+                <option value="Van" {% if request.form.tipo == "Van" %}selected{% endif %}>Van</option>
+            </select>
+
+            <button type="submit">Calculate Price</button>
+
+        </form>
+
+        {% if precio %}
+        <div class="resultado">
+            <div class="detalle">Distance: {{ "%.1f"|format(distancia) }} mi</div>
+            <div class="detalle">Estimated time: {{ duracion }}</div>
+            <div class="precio">${{ precio }}</div>
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+<!-- ✅ AUTOCOMPLETE CORREGIDO -->
+<script>
+function initAutocomplete() {
+    const origen = document.getElementById("origen");
+    const destino = document.getElementById("destino");
+
+    // 🔒 evita error "Jj"
+    if (!origen || !destino) return;
+
+    new google.maps.places.Autocomplete(origen);
+    new google.maps.places.Autocomplete(destino);
+}
+
+// 📍 GEOLOCATION
+function usarUbicacion() {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        document.getElementById("origen").value = lat + "," + lng;
+    });
+}
+</script>
+
+</body>
+</html>
