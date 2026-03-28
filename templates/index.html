@@ -117,6 +117,8 @@
 
         </form>
 
+        <div id="map" style="height: 400px; margin-top:20px; border-radius:12px;"></div>
+
         {% if precio %}
         <div class="resultado">
             <div class="detalle">Distance: {{ "%.1f"|format(distancia) }} mi</div>
@@ -130,7 +132,26 @@
 </div>
 
 <!-- AUTOCOMPLETE -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places"></script>
+
 <script>
+let map;
+let directionsService;
+let directionsRenderer;
+
+function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 26.1224, lng: -80.1373 }, // Fort Lauderdale default
+        zoom: 10,
+    });
+
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map);
+
+    initAutocomplete();
+}
+
 function initAutocomplete() {
     const origen = document.getElementById("origen");
     const destino = document.getElementById("destino");
@@ -139,9 +160,25 @@ function initAutocomplete() {
     new google.maps.places.Autocomplete(destino);
 }
 
-google.maps.event.addDomListener(window, 'load', initAutocomplete);
+// 🚗 DIBUJAR RUTA
+function calcularRuta() {
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
 
-// GEOLOCATION
+    if (!origen || !destino) return;
+
+    directionsService.route({
+        origin: origen,
+        destination: destino,
+        travelMode: 'DRIVING'
+    }, function(result, status) {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(result);
+        }
+    });
+}
+
+// 📍 GEOLOCATION
 function usarUbicacion() {
     navigator.geolocation.getCurrentPosition(function(position) {
         const lat = position.coords.latitude;
@@ -150,6 +187,14 @@ function usarUbicacion() {
         document.getElementById("origen").value = lat + "," + lng;
     });
 }
+
+// 🔥 EJECUTAR AL CARGAR
+window.onload = initMap;
+
+// 🔁 EJECUTAR AL ENVIAR FORM
+document.querySelector("form").addEventListener("submit", function() {
+    setTimeout(calcularRuta, 500);
+});
 </script>
 
 </body>
