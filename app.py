@@ -70,15 +70,18 @@ def obtener_distancia(origen, destino):
 
         response = requests.get(url, params=params)
         data = response.json()
+        print("📡 RESPONSE GOOGLE:", data) 
 
         print("📡 Google response:", data)
 
         if data.get("status") != "OK":
+            print("❌ API ERROR:", data)
             return 10, "15 mins"
 
         elemento = data['rows'][0]['elements'][0]
 
         if elemento.get("status") != "OK":
+            print("❌ DIRECCIÓN INVÁLIDA:", elemento)
             return 10, "15 mins"
 
         metros = elemento['distance']['value']
