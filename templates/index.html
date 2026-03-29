@@ -64,8 +64,9 @@
 
 <div class="container">
 
-    <h1>Luxury Ride Quote</h1>
-    <p>Amyach Logistics</p>
+    <H1>AMYACH LOGISTICS LLC</H1>
+    <P>Luxury Ride Quote</P>
+    
 
     <div class="card">
 
@@ -82,8 +83,12 @@
             value="{{ request.form.destino }}" required>
 
             <select name="tipo">
-                <option value="Business">Business</option>
-                <option value="Van">Van</option>
+                <option value="Business" {% if request.form.tipo == "Business" %}selected{% endif %}>
+                Business
+                </option>
+                <option value="Van" {% if request.form.tipo == "Van" %}selected{% endif %}>
+                Van
+                </option>
             </select>
 
             <button type="submit">Calculate Price</button>
