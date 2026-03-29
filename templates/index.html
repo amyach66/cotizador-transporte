@@ -106,15 +106,15 @@
 
 <script>
 let map, directionsService, directionsRenderer;
+let origenListo = false;
+let destinoListo = false;
 
 function initMap() {
 
     const origenInput = document.getElementById("origen");
     const destinoInput = document.getElementById("destino");
+    const tipoSelect = document.querySelector("select[name='tipo']");
 
-    if (!google || !google.maps) return;
-
-    // 🗺️ MAPA
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 26.1224, lng: -80.1373 },
         zoom: 10,
@@ -124,23 +124,39 @@ function initMap() {
     directionsRenderer = new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);
 
-    // 💎 AUTOCOMPLETE PRO (solo direcciones válidas)
-    const options = {
-        fields: ["formatted_address", "geometry"]
-    };
+    const origenAutocomplete = new google.maps.places.Autocomplete(origenInput);
+    const destinoAutocomplete = new google.maps.places.Autocomplete(destinoInput);
 
-    const origenAutocomplete = new google.maps.places.Autocomplete(origenInput, options);
-    const destinoAutocomplete = new google.maps.places.Autocomplete(destinoInput, options);
+    // 👉 marcar cuando seleccionan direcciones
+    origenAutocomplete.addListener("place_changed", () => {
+        origenListo = true;
+        intentarCalculo();
+    });
 
-    // 🚀 AUTOMÁTICO TIPO UBER
-    origenAutocomplete.addListener("place_changed", calcularTodo);
-    destinoAutocomplete.addListener("place_changed", calcularTodo);
+    destinoAutocomplete.addListener("place_changed", () => {
+        destinoListo = true;
+        intentarCalculo();
+    });
+
+    // 👉 cuando eligen tipo
+    tipoSelect.addEventListener("change", intentarCalculo);
 }
 
-// 🚗 DIBUJAR RUTA
-function calcularRuta() {
-    if (!directionsService || !directionsRenderer) return;
+// 🎯 CONTROLADOR INTELIGENTE
+function intentarCalculo() {
+    const tipo = document.querySelector("select[name='tipo']").value;
 
+    if (origenListo && destinoListo && tipo) {
+        calcularRuta();
+
+        setTimeout(() => {
+            document.querySelector("form").submit();
+        }, 500);
+    }
+}
+
+// 🚗 RUTA
+function calcularRuta() {
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
 
@@ -153,20 +169,8 @@ function calcularRuta() {
     }, function(result, status) {
         if (status === "OK") {
             directionsRenderer.setDirections(result);
-        } else {
-            console.error("Error ruta:", status);
         }
     });
-}
-
-// 💥 TODO AUTOMÁTICO (RUTA + PRECIO)
-function calcularTodo() {
-    calcularRuta();
-
-    // enviar formulario automáticamente (calcula precio backend)
-    setTimeout(() => {
-        document.querySelector("form").submit();
-    }, 500);
 }
 
 // 📍 GEOLOCATION
@@ -175,10 +179,19 @@ function usarUbicacion() {
         document.getElementById("origen").value =
             position.coords.latitude + "," + position.coords.longitude;
 
-        // recalcular automáticamente
-        calcularTodo();
+        origenListo = true;
     });
 }
+    window.addEventListener("load", function() {
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
+
+    if (origen && destino) {
+        setTimeout(() => {
+            calcularRuta();
+        }, 500);
+    }
+});
 </script>
 
 </body>
