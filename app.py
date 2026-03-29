@@ -4,98 +4,109 @@ import requests
 
 app = Flask(__name__)
 
-# 🔑 API KEY (desde Render o entorno local)
 API_KEY = os.environ.get("API_KEY")
 
-# 📊 Tarifas base
-base_rates = {
-    "Business": {"base": 70, "min": 40},
-    "Van": {"base": 75, "min": 60}
-}
-
-# 🛣️ Tramos por tipo
-tiers = {
-    "Business": [
-        (0, 5, 0.9),
-        (5, 100, 1.1),
-        (100, 200, 1.1),
-        (200, 300, 1.1),
-        (300, 5000, 1.2)
-    ],
-    "Van": [
-        (0, 5, 1.2),
-        (5, 100, 1.2),
-        (100, 200, 1.5),
-        (200, 300, 1.75),
-        (300, 5000, 2)
-    ]
-}
-
-# 🧮 Calcular precio
-def calcular_precio(tipo, distancia):
+# =========================
+# 💰 BUSINESS
+# =========================
+def calcular_precio_business(km):
     total = 0
 
-    for desde, hasta, precio in tiers[tipo]:
-        if distancia > desde:
-            millas = min(distancia, hasta) - desde
-            total += millas * precio
+    tiers = [
+        (0, 5, 0.90),
+        (5, 100, 1.10),
+        (100, 300, 1.20),
+        (300, 5000, 1.30)
+    ]
 
-    total += base_rates[tipo]["base"]
-    total = max(total, base_rates[tipo]["min"])
+    for desde, hasta, precio in tiers:
+        if km > desde:
+            tramo = min(km, hasta) - desde
+            total += tramo * precio
 
+    total += 70
     return round(total, 2)
 
-# 🌍 Obtener distancia y tiempo desde Google Maps
+
+# =========================
+# 🚐 VAN
+# =========================
+def calcular_precio_van(km):
+    total = 0
+
+    tiers = [
+        (0, 5, 1.10),
+        (5, 100, 1.20),
+        (100, 200, 1.50),
+        (200, 300, 1.75),
+        (300, 5000, 2.00)
+    ]
+
+    for desde, hasta, precio in tiers:
+        if km > desde:
+            tramo = min(km, hasta) - desde
+            total += tramo * precio
+
+    total += 80
+    return round(total, 2)
+
+
+# =========================
+# 🎯 GENERAL
+# =========================
+def calcular_precio(tipo, km):
+    if tipo == "Business":
+        return calcular_precio_business(km)
+    elif tipo == "Van":
+        return calcular_precio_van(km)
+    return 0
+
+
+# =========================
+# 🌍 DISTANCIA
+# =========================
 def obtener_distancia(origen, destino):
     if not API_KEY:
-        print("⚠️ API KEY no configurada")
-        return 10, "15 mins"
+        return 10, 6.2, "15 mins"
 
     try:
         url = "https://maps.googleapis.com/maps/api/distancematrix/json"
 
-        # 🔒 limpiar inputs
-        origen = origen.strip()
-        destino = destino.strip()
-
-        if not origen or not destino:
-            return 10, "15 mins"
-
         params = {
-            "origins": origen,
-            "destinations": destino,
-            "units": "imperial",
+            "origins": origen.strip(),
+            "destinations": destino.strip(),
+            "units": "metric",
             "key": API_KEY
         }
 
         response = requests.get(url, params=params)
         data = response.json()
-        print("📡 RESPONSE GOOGLE:", data) 
-
-        print("📡 Google response:", data)
 
         if data.get("status") != "OK":
-            print("❌ API ERROR:", data)
-            return 10, "15 mins"
+            return 10, 6.2, "15 mins"
 
         elemento = data['rows'][0]['elements'][0]
 
         if elemento.get("status") != "OK":
-            print("❌ DIRECCIÓN INVÁLIDA:", elemento)
-            return 10, "15 mins"
+            return 10, 6.2, "15 mins"
 
         metros = elemento['distance']['value']
-        millas = round(metros / 1609.34, 1)  # 👈 1 decimal
+
+        km = metros / 1000
+        millas = km * 0.621371
 
         duracion = elemento['duration']['text']
 
-        return millas, duracion
+        return km, round(millas, 1), duracion
 
     except Exception as e:
-        print("❌ ERROR:", e)
-        return 10, "15 mins"
+        print("ERROR:", e)
+        return 10, 6.2, "15 mins"
 
-# 🏠 Ruta principal
+
+# =========================
+# 🏠 RUTA
+# =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
     precio = None
@@ -108,14 +119,12 @@ def index():
         destino = request.form.get("destino")
         tipo = request.form.get("tipo")
 
-        print("📥 Datos recibidos:", origen, destino, tipo)
-
-        # 🔒 Validación
         if not origen or not destino or not tipo:
             error = "Please complete all fields"
         else:
-            distancia, duracion = obtener_distancia(origen, destino)
-            precio = calcular_precio(tipo, distancia)
+            km, millas, duracion = obtener_distancia(origen, destino)
+            precio = calcular_precio(tipo, km)
+            distancia = millas
 
     return render_template(
         "index.html",
@@ -125,6 +134,9 @@ def index():
         error=error
     )
 
-# ▶️ Ejecutar app
+
+# =========================
+# ▶️ RUN
+# =========================
 if __name__ == "__main__":
     app.run(debug=True)
