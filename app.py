@@ -13,10 +13,9 @@ def calcular_precio_business(km):
     total = 0
 
     tiers = [
-        (0, 5, 0.90),
-        (5, 100, 1.10),
-        (100, 300, 1.20),
-        (300, 5000, 1.30)
+        (5, 100, 0.90),
+        (100, 300, 1.10),
+        (300, 5000, 1.20)
     ]
 
     for desde, hasta, precio in tiers:
@@ -35,7 +34,6 @@ def calcular_precio_van(km):
     total = 0
 
     tiers = [
-        (0, 5, 1.10),
         (5, 100, 1.20),
         (100, 200, 1.50),
         (200, 300, 1.75),
