@@ -1,3 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amyach Logistics</title>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #0b1a2f, #111827);
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            text-align: center;
+        }
+
+        .container { margin-top: 80px; }
+
+        .card {
+            background: #1f2937;
+            padding: 30px;
+            border-radius: 15px;
+            width: 320px;
+            margin: auto;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            border: none;
+            background: #374151;
+            color: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #22c55e;
+            border: none;
+            border-radius: 8px;
+            color: white;
+        }
+
+        .location-btn {
+            background: #2563eb;
+            margin-bottom: 10px;
+        }
+
+        .resultado {
+            margin-top: 20px;
+            padding: 15px;
+            background: #111827;
+            border-radius: 10px;
+        }
+    </style>
+
+    <!-- ✅ SOLO UN SCRIPT (EL BUENO) -->
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap">
+    </script>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Luxury Ride Quote</h1>
+    <p>Amyach Logistics</p>
+
+    <div class="card">
+
+        <form method="POST">
+
+            <button type="button" class="location-btn" onclick="usarUbicacion()">
+                📍 Use my location
+            </button>
+
+            <input id="origen" name="origen" placeholder="Pickup location"
+            value="{{ request.form.origen }}" required>
+
+            <input id="destino" name="destino" placeholder="Dropoff location"
+            value="{{ request.form.destino }}" required>
+
+            <select name="tipo">
+                <option value="Business">Business</option>
+                <option value="Van">Van</option>
+            </select>
+
+            <button type="submit">Calculate Price</button>
+
+        </form>
+
+        <div id="map" style="height:300px; margin-top:15px;"></div>
+
+        {% if precio %}
+        <div class="resultado">
+            <div>Distance: {{ "%.1f"|format(distancia) }} mi</div>
+            <div>Estimated time: {{ duracion }}</div>
+            <div><b>${{ precio }}</b></div>
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
 <script>
 let map, directionsService, directionsRenderer;
 
@@ -74,3 +180,6 @@ function usarUbicacion() {
     });
 }
 </script>
+
+</body>
+</html>
