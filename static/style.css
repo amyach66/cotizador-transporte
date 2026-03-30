@@ -1,17 +1,10 @@
-/* =========================
-   🌍 BASE
-========================= */
 body {
     font-family: Arial, sans-serif;
     background: linear-gradient(135deg, #0b1a2f, #111827);
     color: white;
-    text-align: center;
     margin: 0;
 }
 
-/* =========================
-   📦 CONTENEDOR GENERAL
-========================= */
 .container.horizontal {
     display: flex;
     justify-content: center;
@@ -19,9 +12,6 @@ body {
     padding: 0 15px;
 }
 
-/* =========================
-   💳 CARD PRINCIPAL
-========================= */
 .card {
     background: #1f2937;
     padding: 25px;
@@ -29,9 +19,6 @@ body {
     width: 100%;
 }
 
-/* =========================
-   🧱 LAYOUT HORIZONTAL
-========================= */
 .horizontal-card {
     display: flex;
     gap: 20px;
@@ -40,74 +27,64 @@ body {
     margin: auto;
 }
 
-/* =========================
-   🧾 FORMULARIO
-========================= */
 .form-section {
     flex: 1;
     max-width: 400px;
-    text-align: left;
 }
 
-/* =========================
-   🗺️ MAPA
-========================= */
 .map-section {
     flex: 1;
 }
 
 #map {
     width: 100%;
-    height: 100%;
     min-height: 400px;
     border-radius: 10px;
 }
 
-/* =========================
-   🔤 INPUTS
-========================= */
-input, select, button {
+input, button {
     width: 100%;
     margin: 10px 0;
     padding: 12px;
     border-radius: 8px;
     border: none;
-    font-size: 14px;
+    height: 45px;
 }
 
-/* Inputs estilo */
-input, select {
+input {
     background: #374151;
     color: white;
 }
 
-/* =========================
-   🔘 BOTONES
-========================= */
 button {
     background: #22c55e;
     color: white;
     font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
 }
 
-button:hover {
-    background: #16a34a;
-}
-
-/* Botón ubicación */
 .location-btn {
     background: #2563eb;
 }
 
-.location-btn:hover {
-    background: #1d4ed8;
+.vehicle-selector {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
 }
 
-/* =========================
-   💰 RESULTADO
-========================= */
+.vehicle-option {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    background: #374151;
+    cursor: pointer;
+    text-align: center;
+}
+
+.vehicle-option.active {
+    background: #22c55e;
+}
+
 .resultado {
     margin-top: 20px;
     padding: 15px;
@@ -116,24 +93,9 @@ button:hover {
     text-align: center;
 }
 
-.resultado b {
-    font-size: 22px;
-    color: #22c55e;
-}
-
-/* =========================
-   📱 RESPONSIVE
-========================= */
 @media (max-width: 768px) {
-
     .horizontal-card {
         flex-direction: column;
-        max-width: 100%;
-    }
-
-    .form-section {
-        max-width: 100%;
-        text-align: center;
     }
 
     #map {

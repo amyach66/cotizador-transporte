@@ -3,7 +3,6 @@
 <head>
     <title>Amyach Logistics</title>
 
-    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -13,9 +12,7 @@
 
     <div class="card horizontal-card">
 
-        <!-- ===================== -->
-        <!-- FORMULARIO -->
-        <!-- ===================== -->
+        <!-- FORM -->
         <div class="form-section">
 
             <h2>Luxury Ride Quote</h2>
@@ -34,24 +31,21 @@
                 placeholder="Dropoff location"
                 value="{{ request.form.destino }}" required>
 
-                <!-- 🚗 SELECTOR VISUAL -->
+                <!-- SELECTOR VEHICULOS -->
                 <div class="vehicle-selector">
 
                     <div class="vehicle-option {% if request.form.tipo == 'Business' %}active{% endif %}"
                         onclick="selectVehicle('Business', this)">
-                        <div class="icon">🚗</div>
-                        <div class="label">Business</div>
+                        🚗 Business
                     </div>
 
                     <div class="vehicle-option {% if request.form.tipo == 'Van' %}active{% endif %}"
                         onclick="selectVehicle('Van', this)">
-                        <div class="icon">🚐</div>
-                        <div class="label">Van</div>
+                        🚐 Van
                     </div>
 
                 </div>
 
-                <!-- valor oculto -->
                 <input type="hidden" name="tipo" id="tipo"
                 value="{{ request.form.tipo or 'Business' }}">
 
@@ -69,9 +63,7 @@
 
         </div>
 
-        <!-- ===================== -->
         <!-- MAPA -->
-        <!-- ===================== -->
         <div class="map-section">
             <div id="map"></div>
         </div>
@@ -80,29 +72,15 @@
 
 </div>
 
-<!-- ===================== -->
-<!-- JS -->
-<!-- ===================== -->
 <script>
-
 let map, directionsService, directionsRenderer;
-let origenListo = false;
-let destinoListo = false;
 
-// 🚀 MAPA GLOBAL (FIX IMPORTANTE)
+// GOOGLE MAPS (GLOBAL)
 window.initMap = function () {
-
-    console.log("Mapa cargado ✅");
 
     const origenInput = document.getElementById("origen");
     const destinoInput = document.getElementById("destino");
 
-    if (!origenInput || !destinoInput) {
-        console.error("Inputs no encontrados");
-        return;
-    }
-
-    // MAPA
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 26.1224, lng: -80.1373 },
         zoom: 10,
@@ -112,28 +90,24 @@ window.initMap = function () {
     directionsRenderer = new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);
 
-    // AUTOCOMPLETE
-    const origenAutocomplete = new google.maps.places.Autocomplete(origenInput);
-    const destinoAutocomplete = new google.maps.places.Autocomplete(destinoInput);
+    new google.maps.places.Autocomplete(origenInput);
+    new google.maps.places.Autocomplete(destinoInput);
 
-    origenAutocomplete.addListener("place_changed", () => {
-        origenListo = true;
-        intentarCalculo();
-    });
+    // REDIBUJAR RUTA SI YA HAY DATOS
+    setTimeout(() => {
+        const origen = origenInput.value;
+        const destino = destinoInput.value;
 
-    destinoAutocomplete.addListener("place_changed", () => {
-        destinoListo = true;
-        intentarCalculo();
-    });
+        if (origen && destino) {
+            calcularRuta();
+        }
+    }, 700);
 };
 
-// 🚗 RUTA
+// CALCULAR RUTA
 function calcularRuta() {
 
-    if (!directionsService || !directionsRenderer) {
-        console.error("Mapa no inicializado");
-        return;
-    }
+    if (!directionsService) return;
 
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
@@ -147,22 +121,11 @@ function calcularRuta() {
     }, function(result, status) {
         if (status === 'OK') {
             directionsRenderer.setDirections(result);
-        } else {
-            console.error("Error ruta:", status);
         }
     });
 }
 
-// 🔄 CONTROL FLUJO
-function intentarCalculo() {
-    const tipo = document.getElementById("tipo").value;
-
-    if (origenListo && destinoListo && tipo) {
-        calcularRuta();
-    }
-}
-
-// 📍 GEOLOCATION
+// GEOLOCATION
 function usarUbicacion() {
     navigator.geolocation.getCurrentPosition(function(position) {
         document.getElementById("origen").value =
@@ -170,7 +133,7 @@ function usarUbicacion() {
     });
 }
 
-// 🚗 SELECTOR VISUAL
+// SELECTOR VEHICULO
 function selectVehicle(tipo, element) {
 
     document.getElementById("tipo").value = tipo;
@@ -180,13 +143,9 @@ function selectVehicle(tipo, element) {
     });
 
     element.classList.add("active");
-
-    intentarCalculo();
 }
-
 </script>
 
-<!-- GOOGLE MAPS -->
 <script async defer
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap">
 </script>
