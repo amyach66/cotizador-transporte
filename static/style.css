@@ -25,6 +25,7 @@ body {
     max-width: 900px;
     width: 100%;
     margin: auto;
+    align-items: stretch; /* 🔥 CLAVE */
 }
 
 .form-section {
@@ -32,13 +33,17 @@ body {
     max-width: 400px;
 }
 
+/* MAP SECTION AJUSTADA */
 .map-section {
     flex: 1;
+    display: flex;
 }
 
+/* MAPA FULL HEIGHT */
 #map {
     width: 100%;
-    min-height: 400px;
+    height: 100%;
+    min-height: 100%;
     border-radius: 10px;
 }
 
