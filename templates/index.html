@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>Amyach Logistics</title>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -12,11 +11,12 @@
 
     <div class="card horizontal-card">
 
-        <!-- FORM -->
         <div class="form-section">
 
-             <h1>Amyach Logistics</h1>
-             <p>Luxury Ride Quote</p>
+            <div class="branding">
+                <h1>Amyach Logistics</h1>
+                <p>Luxury Ride Quote</p>
+            </div>
 
             <form method="POST">
 
@@ -24,24 +24,19 @@
                     📍 Use my location
                 </button>
 
-                <input id="origen" name="origen"
-                placeholder="Pickup location"
+                <input id="origen" name="origen" placeholder="Pickup location"
                 value="{{ request.form.origen }}" required>
 
-                <input id="destino" name="destino"
-                placeholder="Dropoff location"
+                <input id="destino" name="destino" placeholder="Dropoff location"
                 value="{{ request.form.destino }}" required>
 
-                <!-- SELECTOR VEHICULOS -->
                 <div class="vehicle-selector">
 
-                    <div class="vehicle-option {% if request.form.tipo == 'Business' %}active{% endif %}"
-                        onclick="selectVehicle('Business', this)">
+                    <div class="vehicle-option" onclick="selectVehicle('Business', this)">
                         🚗 Business
                     </div>
 
-                    <div class="vehicle-option {% if request.form.tipo == 'Van' %}active{% endif %}"
-                        onclick="selectVehicle('Van', this)">
+                    <div class="vehicle-option" onclick="selectVehicle('Van', this)">
                         🚐 Van
                     </div>
 
@@ -64,7 +59,6 @@
 
         </div>
 
-        <!-- MAPA -->
         <div class="map-section">
             <div id="map"></div>
         </div>
@@ -76,7 +70,6 @@
 <script>
 let map, directionsService, directionsRenderer;
 
-// GOOGLE MAPS (GLOBAL)
 window.initMap = function () {
 
     const origenInput = document.getElementById("origen");
@@ -94,18 +87,18 @@ window.initMap = function () {
     new google.maps.places.Autocomplete(origenInput);
     new google.maps.places.Autocomplete(destinoInput);
 
-    // REDIBUJAR RUTA SI YA HAY DATOS
-    setTimeout(() => {
-        const origen = origenInput.value;
-        const destino = destinoInput.value;
+    origenInput.addEventListener("change", calcularRuta);
+    destinoInput.addEventListener("change", calcularRuta);
 
-        if (origen && destino) {
+    setTimeout(() => {
+        if (origenInput.value && destinoInput.value) {
             calcularRuta();
         }
     }, 700);
+
+    activarVehiculoInicial();
 };
 
-// CALCULAR RUTA
 function calcularRuta() {
 
     if (!directionsService) return;
@@ -122,19 +115,35 @@ function calcularRuta() {
     }, function(result, status) {
         if (status === 'OK') {
             directionsRenderer.setDirections(result);
+
+            const bounds = new google.maps.LatLngBounds();
+            result.routes[0].overview_path.forEach(p => bounds.extend(p));
+            map.fitBounds(bounds);
         }
     });
 }
 
-// GEOLOCATION
 function usarUbicacion() {
+
     navigator.geolocation.getCurrentPosition(function(position) {
-        document.getElementById("origen").value =
-            position.coords.latitude + "," + position.coords.longitude;
+
+        const latlng = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+        };
+
+        const geocoder = new google.maps.Geocoder();
+
+        geocoder.geocode({ location: latlng }, function(results, status) {
+            if (status === "OK" && results[0]) {
+                document.getElementById("origen").value = results[0].formatted_address;
+                calcularRuta();
+            }
+        });
+
     });
 }
 
-// SELECTOR VEHICULO
 function selectVehicle(tipo, element) {
 
     document.getElementById("tipo").value = tipo;
@@ -144,6 +153,18 @@ function selectVehicle(tipo, element) {
     });
 
     element.classList.add("active");
+
+    calcularRuta();
+}
+
+function activarVehiculoInicial() {
+    const tipo = document.getElementById("tipo").value;
+
+    document.querySelectorAll(".vehicle-option").forEach(el => {
+        if (el.textContent.includes(tipo)) {
+            el.classList.add("active");
+        }
+    });
 }
 </script>
 
