@@ -7,46 +7,82 @@ app = Flask(__name__)
 API_KEY = os.environ.get("API_KEY")
 
 # =========================
+# 🔢 CALCULO TIERS
+# =========================
+def calcular_tiers(km, tiers):
+    total = 0
+
+    for desde, hasta, precio in tiers:
+        if km > desde:
+            tramo = max(0, min(km, hasta) - desde)
+            total += tramo * precio
+
+    return total
+
+
+# =========================
 # 💰 BUSINESS
 # =========================
 def calcular_precio_business(km):
-    total = 0
-
     tiers = [
+        (0, 5, 0),
         (5, 100, 0.90),
         (100, 300, 1.10),
         (300, 5000, 1.20)
     ]
 
-    for desde, hasta, precio in tiers:
-        if km > desde:
-            tramo = min(km, hasta) - desde
-            total += tramo * precio
-
+    total = calcular_tiers(km, tiers)
     total += 70
-    return round(total, 2)
+
+    if total < 74:
+        total = 75
+
+    return total
 
 
 # =========================
 # 🚐 VAN
 # =========================
 def calcular_precio_van(km):
-    total = 0
-
     tiers = [
+        (0, 5, 0),
         (5, 100, 1.20),
         (100, 200, 1.50),
         (200, 300, 1.75),
         (300, 5000, 2.00)
     ]
 
-    for desde, hasta, precio in tiers:
-        if km > desde:
-            tramo = min(km, hasta) - desde
-            total += tramo * precio
+    total = calcular_tiers(km, tiers)
+    total += 75
 
-    total += 80
-    return round(total, 2)
+    if total < 71:
+        total = 75
+
+    return total
+
+
+# =========================
+# ⏱️ AJUSTE POR DURACION
+# =========================
+def ajustar_por_duracion(precio, duracion_texto):
+    try:
+        minutos = 0
+        partes = duracion_texto.split()
+
+        for i, p in enumerate(partes):
+            if "hour" in p:
+                minutos += int(partes[i - 1]) * 60
+            elif "min" in p:
+                minutos += int(partes[i - 1])
+
+        if minutos > 60:
+            extra = (minutos - 60) * 0.5
+            precio += extra
+
+    except:
+        pass
+
+    return precio
 
 
 # =========================
@@ -58,6 +94,13 @@ def calcular_precio(tipo, km):
     elif tipo == "Van":
         return calcular_precio_van(km)
     return 0
+
+
+# =========================
+# 🔄 REDONDEO
+# =========================
+def redondeo_comercial(precio):
+    return round(precio / 5) * 5
 
 
 # =========================
@@ -80,16 +123,9 @@ def obtener_distancia(origen, destino):
         response = requests.get(url, params=params)
         data = response.json()
 
-        if data.get("status") != "OK":
-            return 10, 6.2, "15 mins"
-
         elemento = data['rows'][0]['elements'][0]
 
-        if elemento.get("status") != "OK":
-            return 10, 6.2, "15 mins"
-
         metros = elemento['distance']['value']
-
         km = metros / 1000
         millas = km * 0.621371
 
@@ -121,7 +157,12 @@ def index():
             error = "Please complete all fields"
         else:
             km, millas, duracion = obtener_distancia(origen, destino)
+
             precio = calcular_precio(tipo, km)
+            precio = ajustar_por_duracion(precio, duracion)
+            precio = redondeo_comercial(precio)
+
+            precio = round(precio, 2)
             distancia = millas
 
     return render_template(
