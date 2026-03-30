@@ -101,4 +101,24 @@ button {
     #map {
         height: 250px;
     }
+    /* =========================
+   🏷️ BRANDING
+========================= */
+.branding {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.branding h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.branding p {
+    font-size: 14px;
+    color: #9ca3af;
+    margin-top: 5px;
+}
 }
