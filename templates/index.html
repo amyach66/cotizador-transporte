@@ -3,55 +3,9 @@
 <head>
     <title>Amyach Logistics</title>
 
-    <style>
-        body {
-            background: linear-gradient(135deg, #0b1a2f, #111827);
-            font-family: 'Segoe UI', sans-serif;
-            color: white;
-            text-align: center;
-        }
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-        .container { margin-top: 80px; }
-
-        .card {
-            background: #1f2937;
-            padding: 30px;
-            border-radius: 15px;
-            width: 320px;
-            margin: auto;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 8px;
-            border: none;
-            background: #374151;
-            color: white;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #22c55e;
-            border: none;
-            border-radius: 8px;
-            color: white;
-        }
-
-        .location-btn {
-            background: #2563eb;
-            margin-bottom: 10px;
-        }
-
-        .resultado {
-            margin-top: 20px;
-            padding: 15px;
-            background: #111827;
-            border-radius: 10px;
-        }
-    </style>
+  
 
     <!-- ✅ SOLO UN SCRIPT (EL BUENO) -->
     <script async defer
@@ -95,7 +49,7 @@
 
         </form>
 
-        <div id="map" style="height:300px; margin-top:15px;"></div>
+        <div id="map" style="height:400px; margin-top:15px;"></div>
 
         {% if precio %}
         <div class="resultado">
