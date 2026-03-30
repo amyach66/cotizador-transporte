@@ -35,7 +35,7 @@ def calcular_precio_business(km):
     total += 70
 
     if total < 74:
-        total = 75
+        total = 70
 
     return total
 
