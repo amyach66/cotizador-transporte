@@ -3,77 +3,106 @@
 <head>
     <title>Amyach Logistics</title>
 
+    <!-- CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
-  
-
-    <!-- ✅ SOLO UN SCRIPT (EL BUENO) -->
-    <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap">
-    </script>
-
 </head>
 
 <body>
 
-<div class="container">
+<div class="container horizontal">
 
-    <H1>AMYACH LOGISTICS LLC</H1>
-    <P>Luxury Ride Quote</P>
-    
+    <div class="card horizontal-card">
 
-    <div class="card">
+        <!-- ===================== -->
+        <!-- FORMULARIO -->
+        <!-- ===================== -->
+        <div class="form-section">
 
-        <form method="POST">
+            <h2>Luxury Ride Quote</h2>
 
-            <button type="button" class="location-btn" onclick="usarUbicacion()">
-                📍 Use my location
-            </button>
+            <form method="POST">
 
-            <input id="origen" name="origen" placeholder="Pickup location"
-            value="{{ request.form.origen }}" required>
+                <button type="button" class="location-btn" onclick="usarUbicacion()">
+                    📍 Use my location
+                </button>
 
-            <input id="destino" name="destino" placeholder="Dropoff location"
-            value="{{ request.form.destino }}" required>
+                <input id="origen" name="origen"
+                placeholder="Pickup location"
+                value="{{ request.form.origen }}" required>
 
-            <select name="tipo">
-                <option value="Business" {% if request.form.tipo == "Business" %}selected{% endif %}>
-                Business
-                </option>
-                <option value="Van" {% if request.form.tipo == "Van" %}selected{% endif %}>
-                Van
-                </option>
-            </select>
+                <input id="destino" name="destino"
+                placeholder="Dropoff location"
+                value="{{ request.form.destino }}" required>
 
-            <button type="submit">Calculate Price</button>
+                <!-- 🚗 SELECTOR VISUAL -->
+                <div class="vehicle-selector">
 
-        </form>
+                    <div class="vehicle-option {% if request.form.tipo == 'Business' %}active{% endif %}"
+                        onclick="selectVehicle('Business', this)">
+                        <div class="icon">🚗</div>
+                        <div class="label">Business</div>
+                    </div>
 
-        <div id="map" style="height:400px; margin-top:15px;"></div>
+                    <div class="vehicle-option {% if request.form.tipo == 'Van' %}active{% endif %}"
+                        onclick="selectVehicle('Van', this)">
+                        <div class="icon">🚐</div>
+                        <div class="label">Van</div>
+                    </div>
 
-        {% if precio %}
-        <div class="resultado">
-            <div>Distance: {{ "%.1f"|format(distancia) }} mi</div>
-            <div>Estimated time: {{ duracion }}</div>
-            <div><b>${{ precio }}</b></div>
+                </div>
+
+                <!-- valor oculto -->
+                <input type="hidden" name="tipo" id="tipo"
+                value="{{ request.form.tipo or 'Business' }}">
+
+                <button type="submit">Calculate Price</button>
+
+            </form>
+
+            {% if precio %}
+            <div class="resultado">
+                <div>Distance: {{ "%.1f"|format(distancia) }} mi</div>
+                <div>Estimated time: {{ duracion }}</div>
+                <div><b>${{ precio }}</b></div>
+            </div>
+            {% endif %}
+
         </div>
-        {% endif %}
+
+        <!-- ===================== -->
+        <!-- MAPA -->
+        <!-- ===================== -->
+        <div class="map-section">
+            <div id="map"></div>
+        </div>
 
     </div>
 
 </div>
 
+<!-- ===================== -->
+<!-- JS -->
+<!-- ===================== -->
 <script>
+
 let map, directionsService, directionsRenderer;
 let origenListo = false;
 let destinoListo = false;
 
-function initMap() {
+// 🚀 MAPA GLOBAL (FIX IMPORTANTE)
+window.initMap = function () {
+
+    console.log("Mapa cargado ✅");
 
     const origenInput = document.getElementById("origen");
     const destinoInput = document.getElementById("destino");
-    const tipoSelect = document.querySelector("select[name='tipo']");
 
+    if (!origenInput || !destinoInput) {
+        console.error("Inputs no encontrados");
+        return;
+    }
+
+    // MAPA
     map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 26.1224, lng: -80.1373 },
         zoom: 10,
@@ -83,10 +112,10 @@ function initMap() {
     directionsRenderer = new google.maps.DirectionsRenderer();
     directionsRenderer.setMap(map);
 
+    // AUTOCOMPLETE
     const origenAutocomplete = new google.maps.places.Autocomplete(origenInput);
     const destinoAutocomplete = new google.maps.places.Autocomplete(destinoInput);
 
-    // 👉 marcar cuando seleccionan direcciones
     origenAutocomplete.addListener("place_changed", () => {
         origenListo = true;
         intentarCalculo();
@@ -96,26 +125,16 @@ function initMap() {
         destinoListo = true;
         intentarCalculo();
     });
-
-    // 👉 cuando eligen tipo
-    tipoSelect.addEventListener("change", intentarCalculo);
-}
-
-// 🎯 CONTROLADOR INTELIGENTE
-function intentarCalculo() {
-    const tipo = document.querySelector("select[name='tipo']").value;
-
-    if (origenListo && destinoListo && tipo) {
-        calcularRuta();
-
-        setTimeout(() => {
-            document.querySelector("form").submit();
-        }, 500);
-    }
-}
+};
 
 // 🚗 RUTA
 function calcularRuta() {
+
+    if (!directionsService || !directionsRenderer) {
+        console.error("Mapa no inicializado");
+        return;
+    }
+
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
 
@@ -124,12 +143,23 @@ function calcularRuta() {
     directionsService.route({
         origin: origen,
         destination: destino,
-        travelMode: google.maps.TravelMode.DRIVING
+        travelMode: 'DRIVING'
     }, function(result, status) {
-        if (status === "OK") {
+        if (status === 'OK') {
             directionsRenderer.setDirections(result);
+        } else {
+            console.error("Error ruta:", status);
         }
     });
+}
+
+// 🔄 CONTROL FLUJO
+function intentarCalculo() {
+    const tipo = document.getElementById("tipo").value;
+
+    if (origenListo && destinoListo && tipo) {
+        calcularRuta();
+    }
 }
 
 // 📍 GEOLOCATION
@@ -137,20 +167,28 @@ function usarUbicacion() {
     navigator.geolocation.getCurrentPosition(function(position) {
         document.getElementById("origen").value =
             position.coords.latitude + "," + position.coords.longitude;
-
-        origenListo = true;
     });
 }
-    window.addEventListener("load", function() {
-    const origen = document.getElementById("origen").value;
-    const destino = document.getElementById("destino").value;
 
-    if (origen && destino) {
-        setTimeout(() => {
-            calcularRuta();
-        }, 500);
-    }
-});
+// 🚗 SELECTOR VISUAL
+function selectVehicle(tipo, element) {
+
+    document.getElementById("tipo").value = tipo;
+
+    document.querySelectorAll(".vehicle-option").forEach(el => {
+        el.classList.remove("active");
+    });
+
+    element.classList.add("active");
+
+    intentarCalculo();
+}
+
+</script>
+
+<!-- GOOGLE MAPS -->
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap">
 </script>
 
 </body>
