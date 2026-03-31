@@ -8,7 +8,6 @@
 <body>
 
 <div class="container horizontal">
-
     <div class="card horizontal-card">
 
         <div class="form-section">
@@ -64,7 +63,6 @@
         </div>
 
     </div>
-
 </div>
 
 <script>
@@ -87,8 +85,9 @@ window.initMap = function () {
     new google.maps.places.Autocomplete(origenInput);
     new google.maps.places.Autocomplete(destinoInput);
 
-    origenInput.addEventListener("change", calcularRuta);
-    destinoInput.addEventListener("change", calcularRuta);
+    // 🔥 FIX: usar input en vez de change
+    origenInput.addEventListener("input", calcularRuta);
+    destinoInput.addEventListener("input", calcularRuta);
 
     setTimeout(() => {
         if (origenInput.value && destinoInput.value) {
@@ -123,25 +122,49 @@ function calcularRuta() {
     });
 }
 
+// 🔥 FIX: manejo de errores + mejor UX
 function usarUbicacion() {
 
-    navigator.geolocation.getCurrentPosition(function(position) {
+    const btn = document.querySelector(".location-btn");
+    btn.innerText = "Locating...";
 
-        const latlng = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-        };
+    navigator.geolocation.getCurrentPosition(
 
-        const geocoder = new google.maps.Geocoder();
+        function(position) {
 
-        geocoder.geocode({ location: latlng }, function(results, status) {
-            if (status === "OK" && results[0]) {
-                document.getElementById("origen").value = results[0].formatted_address;
-                calcularRuta();
-            }
-        });
+            const latlng = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
 
-    });
+            const geocoder = new google.maps.Geocoder();
+
+            geocoder.geocode({ location: latlng }, function(results, status) {
+
+                if (status === "OK" && results[0]) {
+                    document.getElementById("origen").value = results[0].formatted_address;
+                    calcularRuta();
+                } else {
+                    alert("Could not get address");
+                }
+
+                btn.innerText = "📍 Use my location";
+            });
+
+        },
+
+        function(error) {
+            btn.innerText = "📍 Use my location";
+            alert("Location error: " + error.message);
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+
+    );
 }
 
 function selectVehicle(tipo, element) {
@@ -169,7 +192,7 @@ function activarVehiculoInicial() {
 </script>
 
 <script async defer
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap">
+src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&libraries=places&callback=initMap">
 </script>
 
 </body>

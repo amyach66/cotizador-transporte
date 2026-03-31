@@ -34,7 +34,8 @@ def calcular_precio_business(km):
     total = calcular_tiers(km, tiers)
     total += 70
 
-    if total < 74:
+    # 🔥 FIX mínimo correcto
+    if total < 70:
         total = 70
 
     return total
@@ -55,7 +56,8 @@ def calcular_precio_van(km):
     total = calcular_tiers(km, tiers)
     total += 75
 
-    if total < 71:
+    # 🔥 FIX mínimo correcto
+    if total < 75:
         total = 75
 
     return total
@@ -79,8 +81,8 @@ def ajustar_por_duracion(precio, duracion_texto):
             extra = (minutos - 60) * 0.5
             precio += extra
 
-    except:
-        pass
+    except Exception as e:
+        print("Error parsing duration:", e)
 
     return precio
 
@@ -107,7 +109,9 @@ def redondeo_comercial(precio):
 # 🌍 DISTANCIA
 # =========================
 def obtener_distancia(origen, destino):
+
     if not API_KEY:
+        print("⚠️ Missing API_KEY")
         return 10, 6.2, "15 mins"
 
     try:
