@@ -1,10 +1,7 @@
 import os
 from flask import Flask, render_template, request
-import requests
 
 app = Flask(__name__)
-
-API_KEY = os.environ.get("API_KEY")
 
 
 # =========================
@@ -80,21 +77,10 @@ def ajustar_por_duracion(precio, duracion_texto):
             extra = (minutos - 60) * 0.5
             precio += extra
 
-    except Exception as e:
-        print("⚠️ Error parsing duration:", e)
+    except:
+        pass
 
     return precio
-
-
-# =========================
-# 🎯 GENERAL
-# =========================
-def calcular_precio(tipo, km):
-    if tipo == "Business":
-        return calcular_precio_business(km)
-    elif tipo == "Van":
-        return calcular_precio_van(km)
-    return 0
 
 
 # =========================
@@ -102,66 +88,6 @@ def calcular_precio(tipo, km):
 # =========================
 def redondeo_comercial(precio):
     return round(precio / 5) * 5
-
-
-# =========================
-# 🌍 DISTANCIA (FIX COMPLETO)
-# =========================
-def obtener_distancia(origen, destino):
-
-    if not API_KEY:
-        print("⚠️ Missing API_KEY")
-        return 10, 6.2, "15 mins"
-
-    try:
-        url = "https://maps.googleapis.com/maps/api/distancematrix/json"
-
-        # 🔥 FIX: limpiar direcciones
-        origen_clean = origen.strip().replace(" ", "+")
-        destino_clean = destino.strip().replace(" ", "+")
-
-        print("\n==============================")
-        print("📍 ORIGEN:", origen)
-        print("📍 DESTINO:", destino)
-
-        params = {
-            "origins": origen_clean,
-            "destinations": destino_clean,
-            "units": "metric",
-            "key": API_KEY
-        }
-
-        response = requests.get(url, params=params)
-        data = response.json()
-
-        print("📦 API RESPONSE:", data)
-
-        # 🔴 VALIDAR STATUS GENERAL
-        if data.get("status") != "OK":
-            print("❌ API STATUS ERROR")
-            return 10, 6.2, "15 mins"
-
-        elemento = data['rows'][0]['elements'][0]
-
-        # 🔴 VALIDAR STATUS DE LA RUTA
-        if elemento.get("status") != "OK":
-            print("❌ ROUTE ERROR:", elemento.get("status"))
-            return 10, 6.2, "15 mins"
-
-        metros = elemento['distance']['value']
-        km = metros / 1000
-        millas = km * 0.621371
-
-        duracion = elemento['duration']['text']
-
-        print(f"✅ DISTANCIA REAL: {km:.2f} km ({millas:.2f} mi)")
-        print("==============================\n")
-
-        return km, round(millas, 1), duracion
-
-    except Exception as e:
-        print("🔥 ERROR:", e)
-        return 10, 6.2, "15 mins"
 
 
 # =========================
@@ -175,21 +101,23 @@ def index():
     error = None
 
     if request.method == "POST":
-        origen = request.form.get("origen")
-        destino = request.form.get("destino")
+
         tipo = request.form.get("tipo")
 
-        if not origen or not destino or not tipo:
-            error = "Please complete all fields"
-        else:
-            km, millas, duracion = obtener_distancia(origen, destino)
+        # 🔥 NUEVO: datos reales desde el mapa
+        km = float(request.form.get("km_real", 0))
+        duracion = request.form.get("duracion_real", "0 mins")
 
-            precio = calcular_precio(tipo, km)
+        if km == 0:
+            error = "Could not calculate route"
+        else:
+            precio = calcular_precio_business(km) if tipo == "Business" else calcular_precio_van(km)
+
             precio = ajustar_por_duracion(precio, duracion)
             precio = redondeo_comercial(precio)
 
+            distancia = round(km * 0.621371, 1)
             precio = round(precio, 2)
-            distancia = millas
 
     return render_template(
         "index.html",
@@ -200,8 +128,5 @@ def index():
     )
 
 
-# =========================
-# ▶️ RUN
-# =========================
 if __name__ == "__main__":
     app.run(debug=True)

@@ -23,29 +23,19 @@
                     📍 Use my location
                 </button>
 
-                <input id="origen" name="origen" placeholder="Pickup location"
-                value="{{ request.form.origen }}" required>
+                <input id="origen" name="origen" placeholder="Pickup location" required>
+                <input id="destino" name="destino" placeholder="Dropoff location" required>
 
-                <!-- 🔥 NUEVO: coordenadas reales -->
-                <input type="hidden" id="origen_coords">
-
-                <input id="destino" name="destino" placeholder="Dropoff location"
-                value="{{ request.form.destino }}" required>
+                <!-- 🔥 DATOS REALES DEL MAPA -->
+                <input type="hidden" name="km_real" id="km_real">
+                <input type="hidden" name="duracion_real" id="duracion_real">
 
                 <div class="vehicle-selector">
-
-                    <div class="vehicle-option" onclick="selectVehicle('Business', this)">
-                        🚗 Business
-                    </div>
-
-                    <div class="vehicle-option" onclick="selectVehicle('Van', this)">
-                        🚐 Van
-                    </div>
-
+                    <div class="vehicle-option" onclick="selectVehicle('Business', this)">🚗 Business</div>
+                    <div class="vehicle-option" onclick="selectVehicle('Van', this)">🚐 Van</div>
                 </div>
 
-                <input type="hidden" name="tipo" id="tipo"
-                value="{{ request.form.tipo or 'Business' }}">
+                <input type="hidden" name="tipo" id="tipo" value="Business">
 
                 <button type="submit">Calculate Price</button>
 
@@ -53,7 +43,7 @@
 
             {% if precio %}
             <div class="resultado">
-                <div>Distance: {{ "%.1f"|format(distancia) }} mi</div>
+                <div>Distance: {{ distancia }} mi</div>
                 <div>Estimated time: {{ duracion }}</div>
                 <div><b>${{ precio }}</b></div>
             </div>
@@ -88,52 +78,23 @@ window.initMap = function () {
     new google.maps.places.Autocomplete(origenInput);
     new google.maps.places.Autocomplete(destinoInput);
 
-    // 🔥 FIX: limpiar coordenadas si el usuario escribe
-    origenInput.addEventListener("input", function() {
-        document.getElementById("origen_coords").value = "";
-        calcularRuta();
-    });
-
+    origenInput.addEventListener("input", calcularRuta);
     destinoInput.addEventListener("input", calcularRuta);
-
-    setTimeout(() => {
-        if (origenInput.value && destinoInput.value) {
-            calcularRuta();
-        }
-    }, 700);
-
-    activarVehiculoInicial();
 };
 
 
 // =========================
-// 🗺️ CALCULAR RUTA (FIXED)
+// 🗺️ CALCULAR RUTA REAL
 // =========================
 function calcularRuta() {
 
-    if (!directionsService) return;
-
-    const origenTexto = document.getElementById("origen").value;
+    const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
-    const origenCoords = document.getElementById("origen_coords").value;
 
-    if (!origenTexto || !destino) return;
-
-    let origenFinal;
-
-    // 🔥 usar coordenadas si existen
-    if (origenCoords) {
-        const parts = origenCoords.split(",");
-        origenFinal = {
-            lat: parseFloat(parts[0]),
-            lng: parseFloat(parts[1])
-        };
-    } else {
-        origenFinal = origenTexto;
-    }
+    if (!origen || !destino) return;
 
     directionsService.route({
-        origin: origenFinal,
+        origin: origen,
         destination: destino,
         travelMode: 'DRIVING'
     }, function(result, status) {
@@ -142,91 +103,51 @@ function calcularRuta() {
 
             directionsRenderer.setDirections(result);
 
+            const route = result.routes[0].legs[0];
+
+            // 🔥 DISTANCIA REAL
+            const km = route.distance.value / 1000;
+            const duracion = route.duration.text;
+
+            console.log("KM REAL:", km);
+
+            document.getElementById("km_real").value = km;
+            document.getElementById("duracion_real").value = duracion;
+
             const bounds = new google.maps.LatLngBounds();
             result.routes[0].overview_path.forEach(p => bounds.extend(p));
             map.fitBounds(bounds);
-
-        } else {
-            console.log("Route error:", status);
         }
     });
 }
 
 
 // =========================
-// 📍 GEOLOCATION (FIXED)
+// 📍 GEOLOCATION SIMPLE
 // =========================
 function usarUbicacion() {
 
-    const btn = document.querySelector(".location-btn");
-    btn.innerText = "Locating...";
+    navigator.geolocation.getCurrentPosition(function(position) {
 
-    navigator.geolocation.getCurrentPosition(
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
 
-        function(position) {
+        document.getElementById("origen").value = lat + "," + lng;
 
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-
-            // 🔥 guardar coordenadas reales
-            document.getElementById("origen_coords").value = lat + "," + lng;
-
-            const geocoder = new google.maps.Geocoder();
-
-            geocoder.geocode({ location: { lat, lng } }, function(results, status) {
-
-                if (status === "OK" && results[0]) {
-                    document.getElementById("origen").value = results[0].formatted_address;
-                }
-
-                calcularRuta();
-                btn.innerText = "📍 Use my location";
-            });
-
-        },
-
-        function(error) {
-            btn.innerText = "📍 Use my location";
-            alert("Location error: " + error.message);
-        },
-
-        {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0
-        }
-    );
+        calcularRuta();
+    });
 }
 
 
 // =========================
-// 🚗 VEHICLE SELECTOR
+// 🚗 VEHICLE
 // =========================
-function selectVehicle(tipo, element) {
+function selectVehicle(tipo, el) {
 
     document.getElementById("tipo").value = tipo;
 
-    document.querySelectorAll(".vehicle-option").forEach(el => {
-        el.classList.remove("active");
-    });
-
-    element.classList.add("active");
-
-    calcularRuta();
-}
-
-
-// =========================
-// 🔄 INICIAL
-// =========================
-function activarVehiculoInicial() {
-    const tipo = document.getElementById("tipo").value;
-
-    document.querySelectorAll(".vehicle-option").forEach(el => {
-        if (el.textContent.includes(tipo)) {
-            el.classList.add("active");
-        }
-    });
+    document.querySelectorAll(".vehicle-option").forEach(e => e.classList.remove("active"));
+    el.classList.add("active");
 }
 </script>
 
