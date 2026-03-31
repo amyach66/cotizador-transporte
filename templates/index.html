@@ -26,6 +26,9 @@
                 <input id="origen" name="origen" placeholder="Pickup location"
                 value="{{ request.form.origen }}" required>
 
+                <!-- 🔥 NUEVO: coordenadas reales -->
+                <input type="hidden" id="origen_coords">
+
                 <input id="destino" name="destino" placeholder="Dropoff location"
                 value="{{ request.form.destino }}" required>
 
@@ -85,8 +88,12 @@ window.initMap = function () {
     new google.maps.places.Autocomplete(origenInput);
     new google.maps.places.Autocomplete(destinoInput);
 
-    // 🔥 FIX: usar input en vez de change
-    origenInput.addEventListener("input", calcularRuta);
+    // 🔥 FIX: limpiar coordenadas si el usuario escribe
+    origenInput.addEventListener("input", function() {
+        document.getElementById("origen_coords").value = "";
+        calcularRuta();
+    });
+
     destinoInput.addEventListener("input", calcularRuta);
 
     setTimeout(() => {
@@ -98,31 +105,57 @@ window.initMap = function () {
     activarVehiculoInicial();
 };
 
+
+// =========================
+// 🗺️ CALCULAR RUTA (FIXED)
+// =========================
 function calcularRuta() {
 
     if (!directionsService) return;
 
-    const origen = document.getElementById("origen").value;
+    const origenTexto = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
+    const origenCoords = document.getElementById("origen_coords").value;
 
-    if (!origen || !destino) return;
+    if (!origenTexto || !destino) return;
+
+    let origenFinal;
+
+    // 🔥 usar coordenadas si existen
+    if (origenCoords) {
+        const parts = origenCoords.split(",");
+        origenFinal = {
+            lat: parseFloat(parts[0]),
+            lng: parseFloat(parts[1])
+        };
+    } else {
+        origenFinal = origenTexto;
+    }
 
     directionsService.route({
-        origin: origen,
+        origin: origenFinal,
         destination: destino,
         travelMode: 'DRIVING'
     }, function(result, status) {
+
         if (status === 'OK') {
+
             directionsRenderer.setDirections(result);
 
             const bounds = new google.maps.LatLngBounds();
             result.routes[0].overview_path.forEach(p => bounds.extend(p));
             map.fitBounds(bounds);
+
+        } else {
+            console.log("Route error:", status);
         }
     });
 }
 
-// 🔥 FIX: manejo de errores + mejor UX
+
+// =========================
+// 📍 GEOLOCATION (FIXED)
+// =========================
 function usarUbicacion() {
 
     const btn = document.querySelector(".location-btn");
@@ -132,22 +165,21 @@ function usarUbicacion() {
 
         function(position) {
 
-            const latlng = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+
+            // 🔥 guardar coordenadas reales
+            document.getElementById("origen_coords").value = lat + "," + lng;
 
             const geocoder = new google.maps.Geocoder();
 
-            geocoder.geocode({ location: latlng }, function(results, status) {
+            geocoder.geocode({ location: { lat, lng } }, function(results, status) {
 
                 if (status === "OK" && results[0]) {
                     document.getElementById("origen").value = results[0].formatted_address;
-                    calcularRuta();
-                } else {
-                    alert("Could not get address");
                 }
 
+                calcularRuta();
                 btn.innerText = "📍 Use my location";
             });
 
@@ -163,10 +195,13 @@ function usarUbicacion() {
             timeout: 10000,
             maximumAge: 0
         }
-
     );
 }
 
+
+// =========================
+// 🚗 VEHICLE SELECTOR
+// =========================
 function selectVehicle(tipo, element) {
 
     document.getElementById("tipo").value = tipo;
@@ -180,6 +215,10 @@ function selectVehicle(tipo, element) {
     calcularRuta();
 }
 
+
+// =========================
+// 🔄 INICIAL
+// =========================
 function activarVehiculoInicial() {
     const tipo = document.getElementById("tipo").value;
 
