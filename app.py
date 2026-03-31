@@ -1,4 +1,3 @@
-import os
 from flask import Flask, render_template, request
 
 app = Flask(__name__)
@@ -9,12 +8,10 @@ app = Flask(__name__)
 # =========================
 def calcular_tiers(km, tiers):
     total = 0
-
     for desde, hasta, precio in tiers:
         if km > desde:
             tramo = max(0, min(km, hasta) - desde)
             total += tramo * precio
-
     return total
 
 
@@ -60,7 +57,7 @@ def calcular_precio_van(km):
 
 
 # =========================
-# ⏱️ AJUSTE POR DURACION
+# ⏱️ DURACION
 # =========================
 def ajustar_por_duracion(precio, duracion_texto):
     try:
@@ -74,8 +71,7 @@ def ajustar_por_duracion(precio, duracion_texto):
                 minutos += int(partes[i - 1])
 
         if minutos > 60:
-            extra = (minutos - 60) * 0.5
-            precio += extra
+            precio += (minutos - 60) * 0.5
 
     except:
         pass
@@ -95,23 +91,35 @@ def redondeo_comercial(precio):
 # =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
+
     precio = None
     distancia = None
     duracion = None
     error = None
 
+    # 🔥 persistencia
+    origen = ""
+    destino = ""
+    tipo = "Business"
+
     if request.method == "POST":
 
-        tipo = request.form.get("tipo")
+        origen = request.form.get("origen", "")
+        destino = request.form.get("destino", "")
+        tipo = request.form.get("tipo", "Business")
 
-        # 🔥 NUEVO: datos reales desde el mapa
-        km = float(request.form.get("km_real", 0))
+        km_str = request.form.get("km_real", "").strip()
         duracion = request.form.get("duracion_real", "0 mins")
 
-        if km == 0:
-            error = "Could not calculate route"
+        if not km_str:
+            error = "Route not calculated. Please try again."
         else:
-            precio = calcular_precio_business(km) if tipo == "Business" else calcular_precio_van(km)
+            km = float(km_str)
+
+            if tipo == "Business":
+                precio = calcular_precio_business(km)
+            else:
+                precio = calcular_precio_van(km)
 
             precio = ajustar_por_duracion(precio, duracion)
             precio = redondeo_comercial(precio)
@@ -124,7 +132,10 @@ def index():
         precio=precio,
         distancia=distancia,
         duracion=duracion,
-        error=error
+        error=error,
+        origen=origen,
+        destino=destino,
+        tipo=tipo
     )
 
 

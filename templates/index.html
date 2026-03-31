@@ -23,19 +23,33 @@
                     📍 Use my location
                 </button>
 
-                <input id="origen" name="origen" placeholder="Pickup location" required>
-                <input id="destino" name="destino" placeholder="Dropoff location" required>
+                <input id="origen" name="origen"
+                value="{{ origen }}"
+                placeholder="Pickup location" required>
 
-                <!-- 🔥 DATOS REALES DEL MAPA -->
+                <input id="destino" name="destino"
+                value="{{ destino }}"
+                placeholder="Dropoff location" required>
+
+                <!-- 🔥 DATOS DEL MAPA -->
                 <input type="hidden" name="km_real" id="km_real">
                 <input type="hidden" name="duracion_real" id="duracion_real">
 
                 <div class="vehicle-selector">
-                    <div class="vehicle-option" onclick="selectVehicle('Business', this)">🚗 Business</div>
-                    <div class="vehicle-option" onclick="selectVehicle('Van', this)">🚐 Van</div>
+
+                    <div class="vehicle-option {% if tipo == 'Business' %}active{% endif %}"
+                        onclick="selectVehicle('Business', this)">
+                        🚗 Business
+                    </div>
+
+                    <div class="vehicle-option {% if tipo == 'Van' %}active{% endif %}"
+                        onclick="selectVehicle('Van', this)">
+                        🚐 Van
+                    </div>
+
                 </div>
 
-                <input type="hidden" name="tipo" id="tipo" value="Business">
+                <input type="hidden" name="tipo" id="tipo" value="{{ tipo }}">
 
                 <button type="submit">Calculate Price</button>
 
@@ -80,12 +94,16 @@ window.initMap = function () {
 
     origenInput.addEventListener("input", calcularRuta);
     destinoInput.addEventListener("input", calcularRuta);
+
+    // 🔥 REDIBUJAR RUTA DESPUÉS DE POST
+    setTimeout(() => {
+        if (origenInput.value && destinoInput.value) {
+            calcularRuta();
+        }
+    }, 500);
 };
 
 
-// =========================
-// 🗺️ CALCULAR RUTA REAL
-// =========================
 function calcularRuta() {
 
     const origen = document.getElementById("origen").value;
@@ -105,11 +123,8 @@ function calcularRuta() {
 
             const route = result.routes[0].legs[0];
 
-            // 🔥 DISTANCIA REAL
             const km = route.distance.value / 1000;
             const duracion = route.duration.text;
-
-            console.log("KM REAL:", km);
 
             document.getElementById("km_real").value = km;
             document.getElementById("duracion_real").value = duracion;
@@ -122,9 +137,6 @@ function calcularRuta() {
 }
 
 
-// =========================
-// 📍 GEOLOCATION SIMPLE
-// =========================
 function usarUbicacion() {
 
     navigator.geolocation.getCurrentPosition(function(position) {
@@ -139,9 +151,6 @@ function usarUbicacion() {
 }
 
 
-// =========================
-// 🚗 VEHICLE
-// =========================
 function selectVehicle(tipo, el) {
 
     document.getElementById("tipo").value = tipo;
