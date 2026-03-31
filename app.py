@@ -6,6 +6,7 @@ app = Flask(__name__)
 
 API_KEY = os.environ.get("API_KEY")
 
+
 # =========================
 # 🔢 CALCULO TIERS
 # =========================
@@ -34,7 +35,6 @@ def calcular_precio_business(km):
     total = calcular_tiers(km, tiers)
     total += 70
 
-    # 🔥 FIX mínimo correcto
     if total < 70:
         total = 70
 
@@ -56,7 +56,6 @@ def calcular_precio_van(km):
     total = calcular_tiers(km, tiers)
     total += 75
 
-    # 🔥 FIX mínimo correcto
     if total < 75:
         total = 75
 
@@ -82,7 +81,7 @@ def ajustar_por_duracion(precio, duracion_texto):
             precio += extra
 
     except Exception as e:
-        print("Error parsing duration:", e)
+        print("⚠️ Error parsing duration:", e)
 
     return precio
 
@@ -106,7 +105,7 @@ def redondeo_comercial(precio):
 
 
 # =========================
-# 🌍 DISTANCIA
+# 🌍 DISTANCIA (FIX COMPLETO)
 # =========================
 def obtener_distancia(origen, destino):
 
@@ -117,9 +116,17 @@ def obtener_distancia(origen, destino):
     try:
         url = "https://maps.googleapis.com/maps/api/distancematrix/json"
 
+        # 🔥 FIX: limpiar direcciones
+        origen_clean = origen.strip().replace(" ", "+")
+        destino_clean = destino.strip().replace(" ", "+")
+
+        print("\n==============================")
+        print("📍 ORIGEN:", origen)
+        print("📍 DESTINO:", destino)
+
         params = {
-            "origins": origen.strip(),
-            "destinations": destino.strip(),
+            "origins": origen_clean,
+            "destinations": destino_clean,
             "units": "metric",
             "key": API_KEY
         }
@@ -127,7 +134,19 @@ def obtener_distancia(origen, destino):
         response = requests.get(url, params=params)
         data = response.json()
 
+        print("📦 API RESPONSE:", data)
+
+        # 🔴 VALIDAR STATUS GENERAL
+        if data.get("status") != "OK":
+            print("❌ API STATUS ERROR")
+            return 10, 6.2, "15 mins"
+
         elemento = data['rows'][0]['elements'][0]
+
+        # 🔴 VALIDAR STATUS DE LA RUTA
+        if elemento.get("status") != "OK":
+            print("❌ ROUTE ERROR:", elemento.get("status"))
+            return 10, 6.2, "15 mins"
 
         metros = elemento['distance']['value']
         km = metros / 1000
@@ -135,10 +154,13 @@ def obtener_distancia(origen, destino):
 
         duracion = elemento['duration']['text']
 
+        print(f"✅ DISTANCIA REAL: {km:.2f} km ({millas:.2f} mi)")
+        print("==============================\n")
+
         return km, round(millas, 1), duracion
 
     except Exception as e:
-        print("ERROR:", e)
+        print("🔥 ERROR:", e)
         return 10, 6.2, "15 mins"
 
 
