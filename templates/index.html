@@ -17,7 +17,7 @@
                 <p>Luxury Ride Quote</p>
             </div>
 
-            <form method="POST">
+            <form method="POST" id="quoteForm">
 
                 <button type="button" class="location-btn" onclick="usarUbicacion()">
                     📍 Use my location
@@ -51,7 +51,8 @@
 
                 <input type="hidden" name="tipo" id="tipo" value="{{ tipo }}">
 
-                <button type="submit">Calculate Price</button>
+                <!-- 🔥 CAMBIO CLAVE -->
+                <button type="button" onclick="handleSubmit()">Calculate Price</button>
 
             </form>
 
@@ -104,6 +105,9 @@ window.initMap = function () {
 };
 
 
+// =========================
+// 🗺️ CALCULAR RUTA
+// =========================
 function calcularRuta() {
 
     const origen = document.getElementById("origen").value;
@@ -137,6 +141,50 @@ function calcularRuta() {
 }
 
 
+// =========================
+// 🔥 SUBMIT CONTROLADO
+// =========================
+function handleSubmit() {
+
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
+
+    if (!origen || !destino) {
+        alert("Please complete all fields");
+        return;
+    }
+
+    directionsService.route({
+        origin: origen,
+        destination: destino,
+        travelMode: 'DRIVING'
+    }, function(result, status) {
+
+        if (status === 'OK') {
+
+            directionsRenderer.setDirections(result);
+
+            const route = result.routes[0].legs[0];
+
+            const km = route.distance.value / 1000;
+            const duracion = route.duration.text;
+
+            // 🔥 SIEMPRE ACTUALIZA ANTES DE ENVIAR
+            document.getElementById("km_real").value = km;
+            document.getElementById("duracion_real").value = duracion;
+
+            document.getElementById("quoteForm").submit();
+
+        } else {
+            alert("Could not calculate route");
+        }
+    });
+}
+
+
+// =========================
+// 📍 GEOLOCATION
+// =========================
 function usarUbicacion() {
 
     navigator.geolocation.getCurrentPosition(function(position) {
@@ -151,6 +199,9 @@ function usarUbicacion() {
 }
 
 
+// =========================
+// 🚗 VEHICLE
+// =========================
 function selectVehicle(tipo, el) {
 
     document.getElementById("tipo").value = tipo;
