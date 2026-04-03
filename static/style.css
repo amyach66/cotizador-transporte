@@ -5,6 +5,9 @@ body {
     margin: 0;
 }
 
+/* =========================
+   CONTENEDOR
+========================= */
 .container.horizontal {
     display: flex;
     justify-content: center;
@@ -28,11 +31,18 @@ body {
     align-items: stretch;
 }
 
+/* =========================
+   FORM
+========================= */
 .form-section {
     flex: 1;
     max-width: 400px;
+    width: 100%; /* 🔥 FIX */
 }
 
+/* =========================
+   MAPA
+========================= */
 .map-section {
     flex: 1;
     display: flex;
@@ -43,11 +53,14 @@ body {
     height: 100%;
     min-height: 100%;
     border-radius: 10px;
-    border: 2px solid #111827;
 }
 
+/* =========================
+   INPUTS Y BOTONES (FIX CLAVE)
+========================= */
 input, button {
     width: 100%;
+    box-sizing: border-box; /* 🔥 SOLUCIÓN PRINCIPAL */
     margin: 10px 0;
     padding: 12px;
     border-radius: 8px;
@@ -56,34 +69,26 @@ input, button {
 }
 
 input {
+    display: block; /* 🔥 asegura alineación */
     background: #374151;
     color: white;
-    border: 1px solid #4b5563;
-    transition: 0.2s;
-}
-
-input:focus {
-    outline: none;
-    border-color: #22c55e;
-    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+    font-size: 14px;
 }
 
 button {
     background: #22c55e;
     color: white;
     font-weight: bold;
-    transition: 0.2s;
-}
-
-button:hover {
-    transform: translateY(-1px);
-    opacity: 0.9;
+    cursor: pointer;
 }
 
 .location-btn {
     background: #2563eb;
 }
 
+/* =========================
+   VEHÍCULOS
+========================= */
 .vehicle-selector {
     display: flex;
     gap: 10px;
@@ -97,34 +102,26 @@ button:hover {
     background: #374151;
     cursor: pointer;
     text-align: center;
-    transition: 0.2s;
-    border: 1px solid transparent;
-}
-
-.vehicle-option:hover {
-    border-color: #22c55e;
 }
 
 .vehicle-option.active {
     background: #22c55e;
-    transform: scale(1.02);
 }
 
+/* =========================
+   RESULTADO
+========================= */
 .resultado {
     margin-top: 20px;
     padding: 15px;
     background: #111827;
     border-radius: 10px;
     text-align: center;
-    border: 1px solid #22c55e;
 }
 
-.resultado b {
-    font-size: 26px;
-    color: #22c55e;
-}
-
-/* BRANDING */
+/* =========================
+   BRANDING
+========================= */
 .branding {
     text-align: center;
     margin-bottom: 20px;
@@ -134,14 +131,18 @@ button:hover {
     font-size: 28px;
     font-weight: 700;
     margin: 0;
+    letter-spacing: 1px;
 }
 
 .branding p {
     font-size: 14px;
     color: #9ca3af;
+    margin-top: 5px;
 }
 
-/* MOBILE */
+/* =========================
+   RESPONSIVE
+========================= */
 @media (max-width: 768px) {
     .horizontal-card {
         flex-direction: column;
