@@ -81,6 +81,7 @@ def index():
 
         km_str = request.form.get("km_real", "").strip()
         duracion = request.form.get("duracion_real", "0 mins")
+        eta = request.form.get("eta_real")
 
         if not km_str:
             error = "Route not calculated. Please try again."
