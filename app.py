@@ -3,9 +3,6 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 
-# =========================
-# 🔢 CALCULO TIERS
-# =========================
 def calcular_tiers(km, tiers):
     total = 0
     for desde, hasta, precio in tiers:
@@ -15,9 +12,6 @@ def calcular_tiers(km, tiers):
     return total
 
 
-# =========================
-# 💰 BUSINESS
-# =========================
 def calcular_precio_business(km):
     tiers = [
         (0, 5, 0),
@@ -25,19 +19,10 @@ def calcular_precio_business(km):
         (100, 300, 1.10),
         (300, 5000, 1.20)
     ]
-
     total = calcular_tiers(km, tiers)
-    total += 70
-
-    if total < 70:
-        total = 70
-
-    return total
+    return max(total + 70, 70)
 
 
-# =========================
-# 🚐 VAN
-# =========================
 def calcular_precio_van(km):
     tiers = [
         (0, 5, 0),
@@ -46,24 +31,14 @@ def calcular_precio_van(km):
         (200, 300, 1.75),
         (300, 5000, 2.00)
     ]
-
     total = calcular_tiers(km, tiers)
-    total += 75
-
-    if total < 75:
-        total = 75
-
-    return total
+    return max(total + 75, 75)
 
 
-# =========================
-# ⏱️ DURACION
-# =========================
 def ajustar_por_duracion(precio, duracion_texto):
     try:
         minutos = 0
         partes = duracion_texto.split()
-
         for i, p in enumerate(partes):
             if "hour" in p:
                 minutos += int(partes[i - 1]) * 60
@@ -72,23 +47,16 @@ def ajustar_por_duracion(precio, duracion_texto):
 
         if minutos > 60:
             precio += (minutos - 60) * 0.5
-
     except:
         pass
 
     return precio
 
 
-# =========================
-# 🔄 REDONDEO
-# =========================
 def redondeo_comercial(precio):
     return round(precio / 5) * 5
 
 
-# =========================
-# 🏠 RUTA
-# =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
 
@@ -97,16 +65,19 @@ def index():
     duracion = None
     error = None
 
-    # 🔥 persistencia
     origen = ""
     destino = ""
     tipo = "Business"
+    stops = []
 
     if request.method == "POST":
 
         origen = request.form.get("origen", "")
         destino = request.form.get("destino", "")
         tipo = request.form.get("tipo", "Business")
+
+        # 🔥 NUEVO
+        stops = request.form.getlist("stops[]")
 
         km_str = request.form.get("km_real", "").strip()
         duracion = request.form.get("duracion_real", "0 mins")
@@ -135,7 +106,8 @@ def index():
         error=error,
         origen=origen,
         destino=destino,
-        tipo=tipo
+        tipo=tipo,
+        stops=stops  # 🔥 CLAVE
     )
 
 

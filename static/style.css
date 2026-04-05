@@ -37,7 +37,7 @@ body {
 .form-section {
     flex: 1;
     max-width: 400px;
-    width: 100%; /* 🔥 FIX */
+    width: 100%;
 }
 
 /* =========================
@@ -56,11 +56,11 @@ body {
 }
 
 /* =========================
-   INPUTS Y BOTONES (FIX CLAVE)
+   INPUTS Y BOTONES
 ========================= */
 input, button {
     width: 100%;
-    box-sizing: border-box; /* 🔥 SOLUCIÓN PRINCIPAL */
+    box-sizing: border-box;
     margin: 10px 0;
     padding: 12px;
     border-radius: 8px;
@@ -69,7 +69,7 @@ input, button {
 }
 
 input {
-    display: block; /* 🔥 asegura alineación */
+    display: block;
     background: #374151;
     color: white;
     font-size: 14px;
@@ -82,8 +82,74 @@ button {
     cursor: pointer;
 }
 
+button:hover {
+    opacity: 0.9;
+}
+
 .location-btn {
     background: #2563eb;
+}
+
+/* =========================
+   INPUT GROUP (A, B, C)
+========================= */
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    position: relative;
+}
+
+.input-group input {
+    flex: 1;
+}
+
+/* Labels (A, B, C...) */
+.label {
+    width: 30px;
+    height: 30px;
+    background: #22c55e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* =========================
+   STOPS (X BUTTON)
+========================= */
+.stop-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.stop-input {
+    padding-right: 35px;
+}
+
+.remove-stop {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-weight: bold;
+    color: #ef4444;
+    font-size: 16px;
+}
+
+.remove-stop:hover {
+    color: #dc2626;
+}
+
+/* =========================
+   DRAG & DROP
+========================= */
+.input-group.dragging {
+    opacity: 0.5;
+    transform: scale(0.98);
 }
 
 /* =========================
@@ -102,10 +168,15 @@ button {
     background: #374151;
     cursor: pointer;
     text-align: center;
+    transition: 0.2s;
 }
 
 .vehicle-option.active {
     background: #22c55e;
+}
+
+.vehicle-option:hover {
+    background: #4b5563;
 }
 
 /* =========================
