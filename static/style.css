@@ -223,3 +223,22 @@ button:hover {
         height: 250px;
     }
 }
+/* =========================
+   PRICE SECTION
+    ========================= */
+
+    .price-section {
+      margin-top: 10px;
+      text-align: center;
+    }
+
+        .price-label {
+    font-size: 14px;
+    color: #9ca3af;
+    }
+
+    .price-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #22c55e;
+}   
