@@ -75,6 +75,7 @@ def index():
         origen = request.form.get("origen", "")
         destino = request.form.get("destino", "")
         tipo = request.form.get("tipo", "Business")
+        eta = request.form.get("eta_real")
 
         # 🔥 NUEVO
         stops = request.form.getlist("stops[]")
@@ -104,6 +105,7 @@ def index():
         precio=precio,
         distancia=distancia,
         duracion=duracion,
+        eta=eta,
         error=error,
         origen=origen,
         destino=destino,
