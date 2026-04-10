@@ -23,16 +23,13 @@
                     📍 Use my location
                 </button>
 
-                <!-- ORIGEN -->
                 <div class="input-group">
                     <span class="label">A</span>
                     <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
                 </div>
 
-                <!-- STOPS -->
                 <div id="stops-container"></div>
 
-                <!-- DESTINO -->
                 <div class="input-group">
                     <span class="label" id="destino-label">B</span>
                     <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
@@ -40,11 +37,20 @@
 
                 <button type="button" onclick="agregarParada()">➕ Add Stop</button>
 
+                <!-- FECHA Y HORA -->
+                <div class="input-group">
+                    <input type="date" name="fecha" required>
+                </div>
+
+                <div class="input-group">
+                    <input type="time" name="hora" required>
+                </div>
+
                 <input type="hidden" name="km_real" id="km_real">
                 <input type="hidden" name="duracion_real" id="duracion_real">
                 <input type="hidden" name="eta_real" id="eta_real">
 
-                 <button type="button" onclick="handleSubmit()">Calculate Price</button>
+                <button type="button" onclick="handleSubmit()">Request Booking</button>
 
             </form>
 
@@ -68,7 +74,6 @@
     </div>
 </div>
 
-<!-- 🔥 DATA SEGURA DESDE FLASK -->
 <script id="stops-data" type="application/json">
 {{ stops | default([]) | tojson }}
 </script>
@@ -77,9 +82,6 @@
 let map, directionsService, directionsRenderer;
 let markers = [];
 
-// =========================
-// INIT MAP
-// =========================
 window.initMap = function () {
 
     const origenInput = document.getElementById("origen");
@@ -104,7 +106,6 @@ window.initMap = function () {
     origenInput.addEventListener("input", calcularRuta);
     destinoInput.addEventListener("input", calcularRuta);
 
-    // 🔥 CARGA SEGURA DE STOPS
     let stopsFromServer = [];
     try {
         const data = document.getElementById("stops-data").textContent;
@@ -118,63 +119,16 @@ window.initMap = function () {
     });
 
     actualizarEtiquetas();
-
-    setTimeout(function() {
-        if (origenInput.value && destinoInput.value) {
-            calcularRuta();
-        }
-    }, 500);
 };
 
-
-// =========================
-// MARKERS
-// =========================
-function limpiarMarkers() {
-    markers.forEach(function(m) { m.setMap(null); });
-    markers = [];
-}
-
-function dibujarMarcadores(result) {
-
-    limpiarMarkers();
-
-    const legs = result.routes[0].legs;
-
-    markers.push(new google.maps.Marker({
-        position: legs[0].start_location,
-        label: "A",
-        map: map
-    }));
-
-    legs.forEach(function(leg, index) {
-        const label = String.fromCharCode(66 + index);
-
-        markers.push(new google.maps.Marker({
-            position: leg.end_location,
-            label: label,
-            map: map
-        }));
-    });
-}
-
-
-// =========================
-// AGREGAR PARADA
-// =========================
 function agregarParada(valor = "") {
-
     const container = document.getElementById("stops-container");
 
     const group = document.createElement("div");
     group.className = "input-group";
-    group.draggable = true;
 
     const label = document.createElement("span");
     label.className = "label";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "stop-wrapper";
 
     const input = document.createElement("input");
     input.className = "stop-input";
@@ -182,94 +136,16 @@ function agregarParada(valor = "") {
     input.placeholder = "Stop location";
     input.value = valor;
 
-    const removeBtn = document.createElement("span");
-    removeBtn.className = "remove-stop";
-    removeBtn.innerText = "✕";
-
-    removeBtn.onclick = function() {
-        group.remove();
-        actualizarEtiquetas();
-        calcularRuta();
-    };
-
-    wrapper.appendChild(input);
-    wrapper.appendChild(removeBtn);
-
     group.appendChild(label);
-    group.appendChild(wrapper);
+    group.appendChild(input);
 
     container.appendChild(group);
 
     new google.maps.places.Autocomplete(input);
-
-    input.addEventListener("input", function() {
-        actualizarEtiquetas();
-        calcularRuta();
-    });
-
-    group.addEventListener("dragstart", function() {
-        group.classList.add("dragging");
-    });
-
-    group.addEventListener("dragend", function() {
-        group.classList.remove("dragging");
-        actualizarEtiquetas();
-        calcularRuta();
-    });
-
     actualizarEtiquetas();
 }
 
-
-// =========================
-// DRAG & DROP
-// =========================
-const container = document.getElementById("stops-container");
-
-container.addEventListener("dragover", function(e) {
-    e.preventDefault();
-
-    const dragging = document.querySelector(".dragging");
-    if (!dragging) return;
-
-    const afterElement = getDragAfterElement(container, e.clientY);
-
-    if (!afterElement) {
-        container.appendChild(dragging);
-    } else {
-        container.insertBefore(dragging, afterElement);
-    }
-});
-
-function getDragAfterElement(container, y) {
-
-    const elements = Array.from(
-        container.querySelectorAll(".input-group:not(.dragging)")
-    );
-
-    let closest = null;
-    let closestOffset = Number.NEGATIVE_INFINITY;
-
-    elements.forEach(function(child) {
-
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-
-        if (offset < 0 && offset > closestOffset) {
-            closestOffset = offset;
-            closest = child;
-        }
-    });
-
-    return closest;
-}
-
-
-// =========================
-// ETIQUETAS
-// =========================
 function actualizarEtiquetas() {
-
     const stops = document.querySelectorAll("#stops-container .input-group");
 
     stops.forEach(function(group, index) {
@@ -281,48 +157,7 @@ function actualizarEtiquetas() {
         String.fromCharCode(66 + stops.length);
 }
 
-
-// =========================
-// RUTA VISUAL
-// =========================
-function calcularRuta() {
-
-    const origen = document.getElementById("origen").value;
-    const destino = document.getElementById("destino").value;
-
-    if (!origen || !destino) return;
-
-    const stops = document.querySelectorAll(".stop-input");
-
-    let waypoints = [];
-
-    stops.forEach(function(stop) {
-        if (stop.value) {
-            waypoints.push({
-                location: stop.value,
-                stopover: true
-            });
-        }
-    });
-
-    directionsService.route({
-        origin: origen,
-        destination: destino,
-        waypoints: waypoints,
-        travelMode: 'DRIVING'
-    }, function(result, status) {
-
-        if (status === 'OK') {
-            directionsRenderer.setDirections(result);
-            dibujarMarcadores(result);
-        }
-    });
-}
-
-
-// =========================
-// SUBMIT (FIXED ETA)
-// =========================
+// 🔥 WHATSAPP BOOKING
 function handleSubmit() {
 
     const origen = document.getElementById("origen").value;
@@ -330,30 +165,21 @@ function handleSubmit() {
 
     if (!origen || !destino) return;
 
-    const stops = document.querySelectorAll(".stop-input");
+    const fecha = document.querySelector('input[name="fecha"]').value;
+    const hora = document.querySelector('input[name="hora"]').value;
 
-    let waypoints = [];
-
-    stops.forEach(function(stop) {
-        if (stop.value) {
-            waypoints.push({
-                location: stop.value,
-                stopover: true
-            });
-        }
-    });
+    if (!fecha || !hora) {
+        alert("Select date and time");
+        return;
+    }
 
     directionsService.route({
         origin: origen,
         destination: destino,
-        waypoints: waypoints,
         travelMode: 'DRIVING'
     }, function(result, status) {
 
         if (status === 'OK') {
-
-            directionsRenderer.setDirections(result);
-            dibujarMarcadores(result);
 
             let totalKm = 0;
             let totalMin = 0;
@@ -364,64 +190,42 @@ function handleSubmit() {
             });
 
             const km = totalKm / 1000;
-
-            // ⏱️ duración
             const totalMinutes = Math.round(totalMin / 60);
-            const hours = Math.floor(totalMinutes / 60);
-            const minutes = totalMinutes % 60;
 
-            let duracion = "";
-            if (hours > 0) duracion += hours + (hours === 1 ? " hr " : " hrs ");
-            if (minutes > 0) duracion += minutes + " min";
-
-            // 🕒 ETA
             const now = new Date();
             now.setMinutes(now.getMinutes() + totalMinutes);
 
-            let hoursETA = now.getHours();
-            const minutesETA = now.getMinutes();
+            let eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-            const ampm = hoursETA >= 12 ? "PM" : "AM";
-            hoursETA = hoursETA % 12 || 12;
+            const mensaje = 
+`🚐 New Booking Request
 
-            const formattedMinutes = minutesETA < 10 ? "0" + minutesETA : minutesETA;
+Pickup: ${origen}
+Dropoff: ${destino}
 
-            const eta = hoursETA + ":" + formattedMinutes + " " + ampm;
+Date: ${fecha}
+Time: ${hora}
 
-            // guardar
-            document.getElementById("km_real").value = km;
-            document.getElementById("duracion_real").value = duracion;
-            document.getElementById("eta_real").value = eta;
+Distance: ${km.toFixed(1)} km
+ETA: ${eta}
 
-            // 🔥 submit correcto
-            document.getElementById("quoteForm").submit();
+Please confirm availability.`;
+
+            const telefono = "15615601688"; // 🔥 TU NÚMERO LISTO
+
+            const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+            window.open(url, "_blank");
         }
     });
 }
 
-
-// =========================
-// GEOLOCATION
-// =========================
 function usarUbicacion() {
     navigator.geolocation.getCurrentPosition(function(position) {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
         document.getElementById("origen").value = lat + "," + lng;
-        calcularRuta();
     });
-}
-
-
-// =========================
-// VEHICLE
-// =========================
-function selectVehicle(tipo, el) {
-    document.getElementById("tipo").value = tipo;
-    document.querySelectorAll(".vehicle-option").forEach(function(e) {
-        e.classList.remove("active");
-    });
-    el.classList.add("active");
 }
 </script>
 
