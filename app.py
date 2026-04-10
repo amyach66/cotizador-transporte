@@ -60,9 +60,11 @@ def redondeo_comercial(precio):
 @app.route("/", methods=["GET", "POST"])
 def index():
 
+    # 🔥 VARIABLES SIEMPRE DEFINIDAS (CLAVE)
     precio = None
     distancia = None
     duracion = None
+    eta = None
     error = None
 
     origen = ""
@@ -75,10 +77,9 @@ def index():
         origen = request.form.get("origen", "")
         destino = request.form.get("destino", "")
         tipo = request.form.get("tipo", "Business")
-        eta = request.form.get("eta_real")
 
-        # 🔥 NUEVO
-        stops = request.form.getlist("stops[]")
+        # 🔥 SEGURO
+        stops = request.form.getlist("stops[]") or []
 
         km_str = request.form.get("km_real", "").strip()
         duracion = request.form.get("duracion_real", "0 mins")
@@ -87,18 +88,22 @@ def index():
         if not km_str:
             error = "Route not calculated. Please try again."
         else:
-            km = float(km_str)
+            try:
+                km = float(km_str)
 
-            if tipo == "Business":
-                precio = calcular_precio_business(km)
-            else:
-                precio = calcular_precio_van(km)
+                if tipo == "Business":
+                    precio = calcular_precio_business(km)
+                else:
+                    precio = calcular_precio_van(km)
 
-            precio = ajustar_por_duracion(precio, duracion)
-            precio = redondeo_comercial(precio)
+                precio = ajustar_por_duracion(precio, duracion)
+                precio = redondeo_comercial(precio)
 
-            distancia = round(km * 0.621371, 1)
-            precio = round(precio, 2)
+                distancia = round(km * 0.621371, 1)
+                precio = round(precio, 2)
+
+            except Exception as e:
+                error = "Calculation error"
 
     return render_template(
         "index.html",
@@ -110,8 +115,16 @@ def index():
         origen=origen,
         destino=destino,
         tipo=tipo,
-        stops=stops  # 🔥 CLAVE
+        stops=stops
     )
+
+
+# 🔥 DEBUG ERROR EN PRODUCCIÓN (TE SALVA LA VIDA)
+@app.errorhandler(500)
+def error_500(e):
+    import traceback
+    traceback.print_exc()
+    return "Internal Server Error - check logs", 500
 
 
 if __name__ == "__main__":

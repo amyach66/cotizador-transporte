@@ -59,7 +59,7 @@
             <div class="resultado">
                 <div>Distance: {{ distancia }} mi</div>
                 <div>Duration: {{ duracion }}</div>
-                <div>Arrival: {{ eta }}</div>   
+                <div>Arrival: {{ eta if eta else '-' }}</div>   
                 <div><b>${{ precio }}</b></div>
                 <div class="price-label">Your Fare</div>
                 <div class="price-value">${{ precio }}</div>
