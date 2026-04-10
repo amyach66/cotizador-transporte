@@ -23,13 +23,16 @@
                     📍 Use my location
                 </button>
 
+                <!-- ORIGEN -->
                 <div class="input-group">
                     <span class="label">A</span>
                     <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
                 </div>
 
+                <!-- STOPS -->
                 <div id="stops-container"></div>
 
+                <!-- DESTINO -->
                 <div class="input-group">
                     <span class="label" id="destino-label">B</span>
                     <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
@@ -37,13 +40,23 @@
 
                 <button type="button" onclick="agregarParada()">➕ Add Stop</button>
 
-                <!-- 🔥 DATE -->
+                <!-- 👤 NOMBRE -->
+                <div class="input-group">
+                    <input type="text" name="nombre_cliente" placeholder="Your name" required>
+                </div>
+
+                <!-- 📞 TELÉFONO -->
+                <div class="input-group">
+                    <input type="tel" name="telefono_cliente" placeholder="Your phone number" required>
+                </div>
+
+                <!-- 📅 FECHA -->
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
                     <label style="font-size: 12px; color: #9ca3af;">Select Date</label>
                     <input type="date" name="fecha" required>
                 </div>
 
-                <!-- 🔥 TIME -->
+                <!-- ⏰ HORA -->
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
                     <label style="font-size: 12px; color: #9ca3af;">Select Time</label>
                     <input type="time" name="hora" required>
@@ -171,9 +184,11 @@ function handleSubmit() {
 
     const fecha = document.querySelector('input[name="fecha"]').value;
     const hora = document.querySelector('input[name="hora"]').value;
+    const nombreCliente = document.querySelector('input[name="nombre_cliente"]').value;
+    const telefonoCliente = document.querySelector('input[name="telefono_cliente"]').value;
 
-    if (!fecha || !hora) {
-        alert("Select date and time");
+    if (!fecha || !hora || !nombreCliente || !telefonoCliente) {
+        alert("Please complete all fields");
         return;
     }
 
@@ -201,17 +216,36 @@ function handleSubmit() {
 
             let eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
+            // 💲 PRECIO VAN
+            let precio = 75;
+
+            if (km > 5) {
+                let extra = km - 5;
+
+                if (extra <= 95) precio += extra * 1.20;
+                else if (extra <= 195) precio += (95 * 1.20) + (extra - 95) * 1.50;
+                else if (extra <= 295) precio += (95 * 1.20) + (100 * 1.50) + (extra - 195) * 1.75;
+                else precio += (95 * 1.20) + (100 * 1.50) + (100 * 1.75) + (extra - 295) * 2.00;
+            }
+
+            precio = Math.round(precio / 5) * 5;
+
             const mensaje = 
-`🚐 New Booking Request
+`🚐 *New Booking Request*
 
-Pickup: ${origen}
-Dropoff: ${destino}
+👤 Name: ${nombreCliente}
+📞 Phone: ${telefonoCliente}
 
-Date: ${fecha}
-Time: ${hora}
+📍 Pickup: ${origen}
+📍 Dropoff: ${destino}
 
-Distance: ${km.toFixed(1)} km
-ETA: ${eta}
+📅 Date: ${fecha}
+⏰ Time: ${hora}
+
+🛣 Distance: ${km.toFixed(1)} km
+🕒 ETA: ${eta}
+
+💲 Estimated Fare: $${precio}
 
 Please confirm availability.`;
 
@@ -236,7 +270,6 @@ function usarUbicacion() {
 <script async defer
 src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap">
 </script>
-
 
 </body>
 </html>
