@@ -76,7 +76,8 @@ def index():
 
         origen = request.form.get("origen", "")
         destino = request.form.get("destino", "")
-        tipo = request.form.get("tipo", "Business")
+        # tipo = request.form.get("tipo", "Business")
+        tipo = "Van"
 
         # 🔥 SEGURO
         stops = request.form.getlist("stops[]") or []
