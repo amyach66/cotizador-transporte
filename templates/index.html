@@ -23,16 +23,13 @@
                     📍 Use my location
                 </button>
 
-                <!-- ORIGEN -->
                 <div class="input-group">
                     <span class="label">A</span>
                     <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
                 </div>
 
-                <!-- STOPS -->
                 <div id="stops-container"></div>
 
-                <!-- DESTINO -->
                 <div class="input-group">
                     <span class="label" id="destino-label">B</span>
                     <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
@@ -40,23 +37,22 @@
 
                 <button type="button" onclick="agregarParada()">➕ Add Stop</button>
 
-                <!-- 👤 NOMBRE -->
+                <!-- CLIENT INFO -->
                 <div class="input-group">
                     <input type="text" name="nombre_cliente" placeholder="Your name" required>
                 </div>
 
-                <!-- 📞 TELÉFONO -->
                 <div class="input-group">
                     <input type="tel" name="telefono_cliente" placeholder="Your phone number" required>
                 </div>
 
-                <!-- 📅 FECHA -->
+                <!-- DATE -->
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
                     <label style="font-size: 12px; color: #9ca3af;">Select Date</label>
                     <input type="date" name="fecha" required>
                 </div>
 
-                <!-- ⏰ HORA -->
+                <!-- TIME -->
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
                     <label style="font-size: 12px; color: #9ca3af;">Select Time</label>
                     <input type="time" name="hora" required>
@@ -66,7 +62,11 @@
                 <input type="hidden" name="duracion_real" id="duracion_real">
                 <input type="hidden" name="eta_real" id="eta_real">
 
-                <button type="button" onclick="handleSubmit()">Request Booking</button>
+                <!-- 🔥 BOTÓN 1 -->
+                <button type="button" onclick="handleCalculate()">Calculate Price</button>
+
+                <!-- 🔥 BOTÓN 2 -->
+                <button type="button" onclick="handleBooking()">Request Booking</button>
 
             </form>
 
@@ -75,7 +75,6 @@
                 <div>Distance: {{ distancia }} mi</div>
                 <div>Duration: {{ duracion }}</div>
                 <div>Arrival: {{ eta if eta else '-' }}</div>   
-                <div><b>${{ precio }}</b></div>
                 <div class="price-label">Your Fare</div>
                 <div class="price-value">${{ precio }}</div>
             </div>
@@ -96,7 +95,7 @@
 
 <script>
 let map, directionsService, directionsRenderer;
-let markers = [];
+let lastCalculation = null;
 
 window.initMap = function () {
 
@@ -109,88 +108,19 @@ window.initMap = function () {
     });
 
     directionsService = new google.maps.DirectionsService();
-
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressMarkers: true
-    });
-
+    directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
     directionsRenderer.setMap(map);
 
     new google.maps.places.Autocomplete(origenInput);
     new google.maps.places.Autocomplete(destinoInput);
-
-    origenInput.addEventListener("input", calcularRuta);
-    destinoInput.addEventListener("input", calcularRuta);
-
-    let stopsFromServer = [];
-    try {
-        const data = document.getElementById("stops-data").textContent;
-        stopsFromServer = JSON.parse(data);
-    } catch (e) {
-        stopsFromServer = [];
-    }
-
-    stopsFromServer.forEach(function(valor) {
-        agregarParada(valor);
-    });
-
-    actualizarEtiquetas();
 };
 
-function agregarParada(valor = "") {
-    const container = document.getElementById("stops-container");
-
-    const group = document.createElement("div");
-    group.className = "input-group";
-
-    const label = document.createElement("span");
-    label.className = "label";
-
-    const input = document.createElement("input");
-    input.className = "stop-input";
-    input.name = "stops[]";
-    input.placeholder = "Stop location";
-    input.value = valor;
-
-    group.appendChild(label);
-    group.appendChild(input);
-
-    container.appendChild(group);
-
-    new google.maps.places.Autocomplete(input);
-    actualizarEtiquetas();
-}
-
-function actualizarEtiquetas() {
-    const stops = document.querySelectorAll("#stops-container .input-group");
-
-    stops.forEach(function(group, index) {
-        group.querySelector(".label").innerText =
-            String.fromCharCode(66 + index);
-    });
-
-    document.getElementById("destino-label").innerText =
-        String.fromCharCode(66 + stops.length);
-}
-
-function calcularRuta() {}
-
-function handleSubmit() {
+function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
 
     if (!origen || !destino) return;
-
-    const fecha = document.querySelector('input[name="fecha"]').value;
-    const hora = document.querySelector('input[name="hora"]').value;
-    const nombreCliente = document.querySelector('input[name="nombre_cliente"]').value;
-    const telefonoCliente = document.querySelector('input[name="telefono_cliente"]').value;
-
-    if (!fecha || !hora || !nombreCliente || !telefonoCliente) {
-        alert("Please complete all fields");
-        return;
-    }
 
     directionsService.route({
         origin: origen,
@@ -209,61 +139,60 @@ function handleSubmit() {
             });
 
             const km = totalKm / 1000;
-            const totalMinutes = Math.round(totalMin / 60);
 
+            const totalMinutes = Math.round(totalMin / 60);
             const now = new Date();
             now.setMinutes(now.getMinutes() + totalMinutes);
 
             let eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-            // 💲 PRECIO VAN
-            let precio = 75;
+            document.getElementById("km_real").value = km;
+            document.getElementById("duracion_real").value = totalMinutes + " min";
+            document.getElementById("eta_real").value = eta;
 
-            if (km > 5) {
-                let extra = km - 5;
+            lastCalculation = {
+                km: km,
+                eta: eta
+            };
 
-                if (extra <= 95) precio += extra * 1.20;
-                else if (extra <= 195) precio += (95 * 1.20) + (extra - 95) * 1.50;
-                else if (extra <= 295) precio += (95 * 1.20) + (100 * 1.50) + (extra - 195) * 1.75;
-                else precio += (95 * 1.20) + (100 * 1.50) + (100 * 1.75) + (extra - 295) * 2.00;
-            }
-
-            precio = Math.round(precio / 5) * 5;
-
-            const mensaje = 
-`🚐 *New Booking Request*
-
-👤 Name: ${nombreCliente}
-📞 Phone: ${telefonoCliente}
-
-📍 Pickup: ${origen}
-📍 Dropoff: ${destino}
-
-📅 Date: ${fecha}
-⏰ Time: ${hora}
-
-🛣 Distance: ${km.toFixed(1)} km
-🕒 ETA: ${eta}
-
-💲 Estimated Fare: $${precio}
-
-Please confirm availability.`;
-
-            const telefono = "15615601688";
-
-            const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-
-            window.open(url, "_blank");
+            document.getElementById("quoteForm").submit();
         }
     });
 }
 
-function usarUbicacion() {
-    navigator.geolocation.getCurrentPosition(function(position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        document.getElementById("origen").value = lat + "," + lng;
-    });
+function handleBooking() {
+
+    if (!lastCalculation) {
+        alert("Please calculate price first");
+        return;
+    }
+
+    const nombre = document.querySelector('[name="nombre_cliente"]').value;
+    const telefonoCliente = document.querySelector('[name="telefono_cliente"]').value;
+    const fecha = document.querySelector('[name="fecha"]').value;
+    const hora = document.querySelector('[name="hora"]').value;
+
+    const mensaje = 
+`🚐 *New Booking Request*
+
+👤 Name: ${nombre}
+📞 Phone: ${telefonoCliente}
+
+📅 Date: ${fecha}
+⏰ Time: ${hora}
+
+🛣 Distance: ${lastCalculation.km.toFixed(1)} km
+🕒 ETA: ${lastCalculation.eta}
+
+💲 Price shown on screen
+
+Please confirm availability.`;
+
+    const telefono = "15615601688";
+
+    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
+
+    window.open(url, "_blank");
 }
 </script>
 
