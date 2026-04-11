@@ -23,13 +23,16 @@
                     📍 Use my location
                 </button>
 
+                <!-- ORIGEN -->
                 <div class="input-group">
                     <span class="label">A</span>
                     <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
                 </div>
 
+                <!-- STOPS -->
                 <div id="stops-container"></div>
 
+                <!-- DESTINO -->
                 <div class="input-group">
                     <span class="label" id="destino-label">B</span>
                     <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
@@ -62,10 +65,8 @@
                 <input type="hidden" name="duracion_real" id="duracion_real">
                 <input type="hidden" name="eta_real" id="eta_real">
 
-                <!-- 🔥 BOTÓN 1 -->
+                <!-- BOTONES -->
                 <button type="button" onclick="handleCalculate()">Calculate Price</button>
-
-                <!-- 🔥 BOTÓN 2 -->
                 <button type="button" onclick="handleBooking()">Request Booking</button>
 
             </form>
@@ -97,6 +98,9 @@
 let map, directionsService, directionsRenderer;
 let lastCalculation = null;
 
+// =========================
+// INIT MAP
+// =========================
 window.initMap = function () {
 
     const origenInput = document.getElementById("origen");
@@ -108,13 +112,117 @@ window.initMap = function () {
     });
 
     directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({ suppressMarkers: true });
+
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true
+    });
+
     directionsRenderer.setMap(map);
 
     new google.maps.places.Autocomplete(origenInput);
     new google.maps.places.Autocomplete(destinoInput);
+
+    origenInput.addEventListener("input", calcularRuta);
+    destinoInput.addEventListener("input", calcularRuta);
 };
 
+// =========================
+// GEOLOCATION
+// =========================
+function usarUbicacion() {
+    navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        document.getElementById("origen").value = lat + "," + lng;
+        calcularRuta();
+    });
+}
+
+// =========================
+// STOPS
+// =========================
+function agregarParada(valor = "") {
+
+    const container = document.getElementById("stops-container");
+
+    const group = document.createElement("div");
+    group.className = "input-group";
+
+    const label = document.createElement("span");
+    label.className = "label";
+
+    const input = document.createElement("input");
+    input.className = "stop-input";
+    input.name = "stops[]";
+    input.placeholder = "Stop location";
+    input.value = valor;
+
+    group.appendChild(label);
+    group.appendChild(input);
+
+    container.appendChild(group);
+
+    new google.maps.places.Autocomplete(input);
+
+    input.addEventListener("input", calcularRuta);
+
+    actualizarEtiquetas();
+}
+
+// =========================
+// LABELS
+// =========================
+function actualizarEtiquetas() {
+    const stops = document.querySelectorAll("#stops-container .input-group");
+
+    stops.forEach(function(group, index) {
+        group.querySelector(".label").innerText =
+            String.fromCharCode(66 + index);
+    });
+
+    document.getElementById("destino-label").innerText =
+        String.fromCharCode(66 + stops.length);
+}
+
+// =========================
+// RUTA
+// =========================
+function calcularRuta() {
+
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
+
+    if (!origen || !destino) return;
+
+    const stops = document.querySelectorAll(".stop-input");
+
+    let waypoints = [];
+
+    stops.forEach(function(stop) {
+        if (stop.value) {
+            waypoints.push({
+                location: stop.value,
+                stopover: true
+            });
+        }
+    });
+
+    directionsService.route({
+        origin: origen,
+        destination: destino,
+        waypoints: waypoints,
+        travelMode: 'DRIVING'
+    }, function(result, status) {
+
+        if (status === 'OK') {
+            directionsRenderer.setDirections(result);
+        }
+    });
+}
+
+// =========================
+// CALCULATE
+// =========================
 function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
@@ -139,8 +247,8 @@ function handleCalculate() {
             });
 
             const km = totalKm / 1000;
-
             const totalMinutes = Math.round(totalMin / 60);
+
             const now = new Date();
             now.setMinutes(now.getMinutes() + totalMinutes);
 
@@ -150,16 +258,16 @@ function handleCalculate() {
             document.getElementById("duracion_real").value = totalMinutes + " min";
             document.getElementById("eta_real").value = eta;
 
-            lastCalculation = {
-                km: km,
-                eta: eta
-            };
+            lastCalculation = { km, eta };
 
             document.getElementById("quoteForm").submit();
         }
     });
 }
 
+// =========================
+// BOOKING
+// =========================
 function handleBooking() {
 
     if (!lastCalculation) {
