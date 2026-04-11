@@ -173,20 +173,40 @@ function agregarParada(valor = "") {
     const label = document.createElement("span");
     label.className = "label";
 
+    const wrapper = document.createElement("div");
+    wrapper.className = "stop-wrapper";
+
     const input = document.createElement("input");
     input.className = "stop-input";
     input.name = "stops[]";
     input.placeholder = "Stop location";
     input.value = valor;
 
+    const removeBtn = document.createElement("span");
+    removeBtn.className = "remove-stop";
+    removeBtn.innerText = "✕";
+
+    // 🔥 ELIMINAR STOP
+    removeBtn.onclick = function() {
+        group.remove();
+        actualizarEtiquetas();
+        calcularRuta();
+    };
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(removeBtn);
+
     group.appendChild(label);
-    group.appendChild(input);
+    group.appendChild(wrapper);
 
     container.appendChild(group);
 
     new google.maps.places.Autocomplete(input);
 
-    input.addEventListener("input", calcularRuta);
+    input.addEventListener("input", function() {
+        actualizarEtiquetas();
+        calcularRuta();
+    });
 
     actualizarEtiquetas();
 }
