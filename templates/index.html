@@ -124,6 +124,28 @@ window.initMap = function () {
 
     origenInput.addEventListener("input", calcularRuta);
     destinoInput.addEventListener("input", calcularRuta);
+
+    // 🔥 RECUPERAR STOPS DESDE FLASK
+    let stopsFromServer = [];
+    try {
+        const data = document.getElementById("stops-data").textContent;
+        stopsFromServer = JSON.parse(data);
+    } catch (e) {
+        stopsFromServer = [];
+    }
+
+    stopsFromServer.forEach(function(valor) {
+        agregarParada(valor);
+    });
+
+    actualizarEtiquetas();
+
+    // 🔥 REDIBUJAR RUTA AUTOMÁTICAMENTE DESPUÉS DEL RELOAD
+    setTimeout(function() {
+        if (origenInput.value && destinoInput.value) {
+            calcularRuta();
+        }
+    }, 500);
 };
 
 // =========================
