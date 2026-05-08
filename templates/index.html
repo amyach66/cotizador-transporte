@@ -23,16 +23,13 @@
                     📍 Use my location
                 </button>
 
-                <!-- ORIGEN -->
                 <div class="input-group">
                     <span class="label">A</span>
                     <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
                 </div>
 
-                <!-- STOPS -->
                 <div id="stops-container"></div>
 
-                <!-- DESTINO -->
                 <div class="input-group">
                     <span class="label" id="destino-label">B</span>
                     <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
@@ -47,6 +44,11 @@
 
                 <div class="input-group">
                     <input type="tel" name="telefono_cliente" placeholder="Your phone number" required>
+                </div>
+
+                <!-- ✈️ NUEVO CAMPO -->
+                <div class="input-group">
+                    <input type="text" name="flight_number" placeholder="Flight number (optional)">
                 </div>
 
                 <!-- DATE -->
@@ -65,7 +67,6 @@
                 <input type="hidden" name="duracion_real" id="duracion_real">
                 <input type="hidden" name="eta_real" id="eta_real">
 
-                <!-- BOTONES -->
                 <button type="button" onclick="handleCalculate()">Calculate Price</button>
                 <button type="button" onclick="handleBooking()">Request Booking</button>
 
@@ -98,9 +99,6 @@
 let map, directionsService, directionsRenderer;
 let lastCalculation = null;
 
-// =========================
-// INIT MAP
-// =========================
 window.initMap = function () {
 
     const origenInput = document.getElementById("origen");
@@ -125,7 +123,6 @@ window.initMap = function () {
     origenInput.addEventListener("input", calcularRuta);
     destinoInput.addEventListener("input", calcularRuta);
 
-    // 🔥 RECUPERAR STOPS DESDE FLASK
     let stopsFromServer = [];
     try {
         const data = document.getElementById("stops-data").textContent;
@@ -140,7 +137,6 @@ window.initMap = function () {
 
     actualizarEtiquetas();
 
-    // 🔥 REDIBUJAR RUTA AUTOMÁTICAMENTE DESPUÉS DEL RELOAD
     setTimeout(function() {
         if (origenInput.value && destinoInput.value) {
             calcularRuta();
@@ -148,9 +144,6 @@ window.initMap = function () {
     }, 500);
 };
 
-// =========================
-// GEOLOCATION
-// =========================
 function usarUbicacion() {
     navigator.geolocation.getCurrentPosition(function(position) {
         const lat = position.coords.latitude;
@@ -160,9 +153,6 @@ function usarUbicacion() {
     });
 }
 
-// =========================
-// STOPS
-// =========================
 function agregarParada(valor = "") {
 
     const container = document.getElementById("stops-container");
@@ -186,7 +176,6 @@ function agregarParada(valor = "") {
     removeBtn.className = "remove-stop";
     removeBtn.innerText = "✕";
 
-    // 🔥 ELIMINAR STOP
     removeBtn.onclick = function() {
         group.remove();
         actualizarEtiquetas();
@@ -211,9 +200,6 @@ function agregarParada(valor = "") {
     actualizarEtiquetas();
 }
 
-// =========================
-// LABELS
-// =========================
 function actualizarEtiquetas() {
     const stops = document.querySelectorAll("#stops-container .input-group");
 
@@ -226,9 +212,6 @@ function actualizarEtiquetas() {
         String.fromCharCode(66 + stops.length);
 }
 
-// =========================
-// RUTA
-// =========================
 function calcularRuta() {
 
     const origen = document.getElementById("origen").value;
@@ -262,9 +245,6 @@ function calcularRuta() {
     });
 }
 
-// =========================
-// CALCULATE
-// =========================
 function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
@@ -307,9 +287,6 @@ function handleCalculate() {
     });
 }
 
-// =========================
-// BOOKING
-// =========================
 function handleBooking() {
 
     if (!lastCalculation) {
@@ -319,6 +296,7 @@ function handleBooking() {
 
     const nombre = document.querySelector('[name="nombre_cliente"]').value;
     const telefonoCliente = document.querySelector('[name="telefono_cliente"]').value;
+    const flightNumber = document.querySelector('[name="flight_number"]').value;
     const fecha = document.querySelector('[name="fecha"]').value;
     const hora = document.querySelector('[name="hora"]').value;
 
@@ -327,6 +305,7 @@ function handleBooking() {
 
 👤 Name: ${nombre}
 📞 Phone: ${telefonoCliente}
+✈️ Flight: ${flightNumber || "N/A"}
 
 📅 Date: ${fecha}
 ⏰ Time: ${hora}
