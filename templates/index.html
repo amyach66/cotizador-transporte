@@ -1,25 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Amyach Logistics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container horizontal">
+    <div class="card horizontal-card">
+
+        <div class="form-section">
+
+            <div class="branding">
+                <h1>Amyach Logistics</h1>
+                <p>Luxury Ride Quote</p>
+            </div>
+
+            <form method="POST" id="quoteForm">
+
+                <button type="button" class="location-btn" onclick="usarUbicacion()">
+                    📍 Use my location
+                </button>
+
+                <!-- ORIGEN -->
+                <div class="input-group">
+                    <span class="label">A</span>
+                    <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
+                </div>
+
+                <!-- STOPS -->
+                <div id="stops-container"></div>
+
+                <!-- DESTINO -->
+                <div class="input-group">
+                    <span class="label" id="destino-label">B</span>
+                    <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
+                </div>
+
+                <button type="button" onclick="agregarParada()">➕ Add Stop</button>
+
+                <!-- CLIENT INFO -->
+                <div class="input-group">
+                    <input type="text" name="nombre_cliente" placeholder="Your name" required>
+                </div>
+
+                <div class="input-group">
+                    <input type="tel" name="telefono_cliente" placeholder="Your phone number" required>
+                </div>
+
+                <!-- DATE -->
+                <div class="input-group" style="flex-direction: column; align-items: flex-start;">
+                    <label style="font-size: 12px; color: #9ca3af;">Select Date</label>
+                    <input type="date" name="fecha" required>
+                </div>
+
+                <!-- TIME -->
+                <div class="input-group" style="flex-direction: column; align-items: flex-start;">
+                    <label style="font-size: 12px; color: #9ca3af;">Select Time</label>
+                    <input type="time" name="hora" required>
+                </div>
+
+                <input type="hidden" name="km_real" id="km_real">
+                <input type="hidden" name="duracion_real" id="duracion_real">
+                <input type="hidden" name="eta_real" id="eta_real">
+
+                <!-- BOTONES -->
+                <button type="button" onclick="handleCalculate()">Calculate Price</button>
+                <button type="button" onclick="handleBooking()">Request Booking</button>
+
+            </form>
+
+            {% if precio %}
+            <div class="resultado">
+                <div>Distance: {{ distancia }} mi</div>
+                <div>Duration: {{ duracion }}</div>
+                <div>Arrival: {{ eta if eta else '-' }}</div>   
+                <div class="price-label">Your Fare</div>
+                <div class="price-value">${{ precio }}</div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <div class="map-section">
+            <div id="map"></div>
+        </div>
+
+    </div>
+</div>
+
+<script id="stops-data" type="application/json">
+{{ stops | default([]) | tojson }}
+</script>
+
 <script>
 let map, directionsService, directionsRenderer;
 let lastCalculation = null;
 
 // =========================
-// INIT MAP (FIXED)
+// INIT MAP
 // =========================
 window.initMap = function () {
-
-    // 🔥 ESPERAR A QUE EL DOM EXISTA
-    const mapDiv = document.getElementById("map");
-
-    if (!mapDiv) {
-        console.error("Map div not found, retrying...");
-        setTimeout(initMap, 300);
-        return;
-    }
 
     const origenInput = document.getElementById("origen");
     const destinoInput = document.getElementById("destino");
 
-    map = new google.maps.Map(mapDiv, {
+    map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 26.1224, lng: -80.1373 },
         zoom: 10,
     });
@@ -32,17 +119,17 @@ window.initMap = function () {
 
     directionsRenderer.setMap(map);
 
-    if (origenInput) new google.maps.places.Autocomplete(origenInput);
-    if (destinoInput) new google.maps.places.Autocomplete(destinoInput);
+    new google.maps.places.Autocomplete(origenInput);
+    new google.maps.places.Autocomplete(destinoInput);
 
-    origenInput?.addEventListener("input", calcularRuta);
-    destinoInput?.addEventListener("input", calcularRuta);
+    origenInput.addEventListener("input", calcularRuta);
+    destinoInput.addEventListener("input", calcularRuta);
 
-    // recuperar stops
+    // 🔥 RECUPERAR STOPS DESDE FLASK
     let stopsFromServer = [];
     try {
-        const data = document.getElementById("stops-data")?.textContent;
-        stopsFromServer = JSON.parse(data || "[]");
+        const data = document.getElementById("stops-data").textContent;
+        stopsFromServer = JSON.parse(data);
     } catch (e) {
         stopsFromServer = [];
     }
@@ -53,11 +140,12 @@ window.initMap = function () {
 
     actualizarEtiquetas();
 
+    // 🔥 REDIBUJAR RUTA AUTOMÁTICAMENTE DESPUÉS DEL RELOAD
     setTimeout(function() {
-        if (origenInput?.value && destinoInput?.value) {
+        if (origenInput.value && destinoInput.value) {
             calcularRuta();
         }
-    }, 300);
+    }, 500);
 };
 
 // =========================
@@ -98,6 +186,7 @@ function agregarParada(valor = "") {
     removeBtn.className = "remove-stop";
     removeBtn.innerText = "✕";
 
+    // 🔥 ELIMINAR STOP
     removeBtn.onclick = function() {
         group.remove();
         actualizarEtiquetas();
@@ -138,12 +227,12 @@ function actualizarEtiquetas() {
 }
 
 // =========================
-// ROUTE DRAW
+// RUTA
 // =========================
 function calcularRuta() {
 
-    const origen = document.getElementById("origen")?.value;
-    const destino = document.getElementById("destino")?.value;
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
 
     if (!origen || !destino) return;
 
@@ -166,6 +255,7 @@ function calcularRuta() {
         waypoints: waypoints,
         travelMode: 'DRIVING'
     }, function(result, status) {
+
         if (status === 'OK') {
             directionsRenderer.setDirections(result);
         }
@@ -173,17 +263,14 @@ function calcularRuta() {
 }
 
 // =========================
-// CALCULATE (NO RELOAD)
+// CALCULATE
 // =========================
 function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
 
-    if (!origen || !destino) {
-        alert("Enter pickup and dropoff");
-        return;
-    }
+    if (!origen || !destino) return;
 
     directionsService.route({
         origin: origen,
@@ -209,69 +296,15 @@ function handleCalculate() {
 
             let eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-            let precio = 75;
+            document.getElementById("km_real").value = km;
+            document.getElementById("duracion_real").value = totalMinutes + " min";
+            document.getElementById("eta_real").value = eta;
 
-            if (km > 5) {
-                let extra = km - 5;
+            lastCalculation = { km, eta };
 
-                if (extra <= 95) precio += extra * 2.40;
-                else if (extra <= 195) precio += (95 * 2.40) + (extra - 95) * 3.00;
-                else if (extra <= 295) precio += (95 * 2.40) + (100 * 3.00) + (extra - 195) * 3.50;
-                else precio += (95 * 2.40) + (100 * 3.00) + (100 * 3.50) + (extra - 295) * 4.00;
-            }
-
-            if (totalMinutes > 60) {
-                precio += (totalMinutes - 60) * 0.5;
-            }
-
-            precio = Math.round(precio / 5) * 5;
-
-            lastCalculation = {
-                km: km,
-                eta: eta,
-                price: precio,
-                origen: origen,
-                destino: destino
-            };
-
-            console.log("CALCULATION:", lastCalculation);
-
-            mostrarResultado(km, totalMinutes, eta, precio);
+            document.getElementById("quoteForm").submit();
         }
     });
-}
-
-// =========================
-// SHOW RESULT
-// =========================
-function mostrarResultado(km, minutos, eta, precio) {
-
-    let hours = Math.floor(minutos / 60);
-    let mins = minutos % 60;
-
-    let duracion = "";
-    if (hours > 0) duracion += hours + " hr ";
-    if (mins > 0) duracion += mins + " min";
-
-    let distancia = (km * 0.621371).toFixed(1);
-
-    const html = `
-        <div>Distance: ${distancia} mi</div>
-        <div>Duration: ${duracion}</div>
-        <div>Arrival: ${eta}</div>
-        <div class="price-label">Your Fare</div>
-        <div class="price-value">$${precio}</div>
-    `;
-
-    let box = document.querySelector(".resultado");
-
-    if (!box) {
-        box = document.createElement("div");
-        box.className = "resultado";
-        document.querySelector(".form-section").appendChild(box);
-    }
-
-    box.innerHTML = html;
 }
 
 // =========================
@@ -279,31 +312,21 @@ function mostrarResultado(km, minutos, eta, precio) {
 // =========================
 function handleBooking() {
 
-    if (!lastCalculation || !lastCalculation.price) {
+    if (!lastCalculation) {
         alert("Please calculate price first");
         return;
     }
 
     const nombre = document.querySelector('[name="nombre_cliente"]').value;
     const telefonoCliente = document.querySelector('[name="telefono_cliente"]').value;
-    const flightNumber = document.querySelector('[name="flight_number"]').value;
     const fecha = document.querySelector('[name="fecha"]').value;
     const hora = document.querySelector('[name="hora"]').value;
-
-    if (!nombre || !telefonoCliente || !fecha || !hora) {
-        alert("Complete all fields");
-        return;
-    }
 
     const mensaje = 
 `🚐 *New Booking Request*
 
 👤 Name: ${nombre}
 📞 Phone: ${telefonoCliente}
-✈️ Flight: ${flightNumber || "N/A"}
-
-📍 Pickup: ${lastCalculation.origen}
-📍 Dropoff: ${lastCalculation.destino}
 
 📅 Date: ${fecha}
 ⏰ Time: ${hora}
@@ -311,7 +334,7 @@ function handleBooking() {
 🛣 Distance: ${lastCalculation.km.toFixed(1)} km
 🕒 ETA: ${lastCalculation.eta}
 
-💲 Price: $${lastCalculation.price}
+💲 Price shown on screen
 
 Please confirm availability.`;
 
@@ -323,8 +346,9 @@ Please confirm availability.`;
 }
 </script>
 
-<!-- 🔥 IMPORTANTE: QUITAMOS async -->
-<script
-src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap"
-defer>
+<script async defer
+src="https://maps.googleapis.com/maps/api/js?key=AIzaSyASKSqaSVc6WiZdhkN9mnTDEx5_AwDo2y8&libraries=places&callback=initMap">
 </script>
+
+</body>
+</html>
