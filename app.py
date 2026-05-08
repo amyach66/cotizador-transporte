@@ -32,7 +32,7 @@ def calcular_precio_van(km):
         (300, 5000, 4.00)
     ]
     total = calcular_tiers(km, tiers)
-    return max(total + 130, 130)
+    return max(total + 80, 80)
 
 
 def ajustar_por_duracion(precio, duracion_texto):
