@@ -142,6 +142,13 @@ window.initMap = function () {
             calcularRuta();
         }
     }, 500);
+
+    // 🔥 RESTORE FORM DATA
+    document.querySelector('[name="nombre_cliente"]').value = localStorage.getItem("nombre_cliente") || "";
+    document.querySelector('[name="telefono_cliente"]').value = localStorage.getItem("telefono_cliente") || "";
+    document.querySelector('[name="flight_number"]').value = localStorage.getItem("flight_number") || "";
+    document.querySelector('[name="fecha"]').value = localStorage.getItem("fecha") || "";
+    document.querySelector('[name="hora"]').value = localStorage.getItem("hora") || "";
 };
 
 function usarUbicacion() {
@@ -281,6 +288,12 @@ function handleCalculate() {
             document.getElementById("eta_real").value = eta;
 
             lastCalculation = { km, eta };
+
+            localStorage.setItem("nombre_cliente", document.querySelector('[name="nombre_cliente"]').value);
+            localStorage.setItem("telefono_cliente", document.querySelector('[name="telefono_cliente"]').value);
+            localStorage.setItem("flight_number", document.querySelector('[name="flight_number"]').value);
+            localStorage.setItem("fecha", document.querySelector('[name="fecha"]').value);
+            localStorage.setItem("hora", document.querySelector('[name="hora"]').value);    
 
             document.getElementById("quoteForm").submit();
         }
