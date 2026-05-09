@@ -299,51 +299,25 @@ function mostrarResultado(km, minutos, eta, price) {
 // =========================
 function handleBooking() {
 
-    // 🔥 validar cálculo
     if (!lastCalculation) {
-        alert("Please calculate price first");
+        alert("Calculate price first");
         return;
     }
 
-    const nombre = document.querySelector('[name="nombre_cliente"]').value.trim();
-    const telefonoCliente = document.querySelector('[name="telefono_cliente"]').value.trim();
+    const nombre = document.querySelector('[name="nombre_cliente"]').value;
+    const telefonoCliente = document.querySelector('[name="telefono_cliente"]').value;
     const fecha = document.querySelector('[name="fecha"]').value;
     const hora = document.querySelector('[name="hora"]').value;
 
-    const origen = document.getElementById("origen").value.trim();
-    const destino = document.getElementById("destino").value.trim();
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
 
-    // 🔥 VALIDACIONES (SIN ROMPER TU UX)
-    if (!nombre) {
-        alert("Please enter your name");
-        return;
-    }
-
-    if (!telefonoCliente) {
-        alert("Please enter your phone number");
-        return;
-    }
-
-    if (!fecha) {
-        alert("Please select a date");
-        return;
-    }
-
-    if (!hora) {
-        alert("Please select a time");
-        return;
-    }
-
-    if (!origen || !destino) {
-        alert("Please enter pickup and dropoff locations");
-        return;
-    }
-
-    // 🔥 CAPTURAR STOPS (igual que ya lo haces)
     const stops = document.querySelectorAll(".stop-input");
 
+    // 🔥 CONSTRUIR RUTA A → B → C → D
     let ruta = `A: ${origen}\n`;
-    let letra = 66;
+
+    let letra = 66; // B
 
     stops.forEach(stop => {
         if (stop.value) {
