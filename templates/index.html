@@ -292,13 +292,12 @@ function mostrarResultado(km, minutos, eta, price) {
 
     let dist = (km * 0.621371).toFixed(1);
 
-    document.getElementById("resultadoBox").innerHTML = `
-        <div>Distance: ${dist} mi</div>
-        <div>Duration: ${minutos} min</div>
-        <div>Total Time: ${formatDuration(minutos)}</div>
-        <div class="price-label">Your Fare</div>
-        <div class="price-value">$${price}</div>
-    `;
+   document.getElementById("resultadoBox").innerHTML = `
+    <div>Distance: ${dist} mi</div>
+    <div>Duration: ${formatDuration(minutos)}</div>
+    <div class="price-label">Your Fare</div>
+    <div class="price-value">$${price}</div>
+`;
 }
 function formatDuration(minutos) {
     const hours = Math.floor(minutos / 60);
