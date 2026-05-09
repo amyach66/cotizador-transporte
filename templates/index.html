@@ -19,9 +19,6 @@
 
             <form method="POST" id="quoteForm">
 
-                <button type="button" class="location-btn" onclick="usarUbicacion()">
-                    📍 Use my location
-                </button>
 
                 <div class="input-group">
                     <span class="label">A</span>
@@ -119,18 +116,6 @@ window.initMap = function () {
         if (origenInput.value && destinoInput.value) calcularRuta();
     }, 300);
 };
-
-// =========================
-// GEOLOCATION
-// =========================
-function usarUbicacion() {
-    navigator.geolocation.getCurrentPosition(function(position) {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        document.getElementById("origen").value = lat + "," + lng;
-        calcularRuta();
-    });
-}
 
 // =========================
 // STOPS
