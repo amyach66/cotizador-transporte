@@ -324,35 +324,43 @@ function handleBooking() {
     const fecha = document.querySelector('[name="fecha"]').value;
     const hora = document.querySelector('[name="hora"]').value;
 
-    // 🔥 CAPTURAR STOPS
+    const origen = document.getElementById("origen").value;
+    const destino = document.getElementById("destino").value;
+
     const stops = document.querySelectorAll(".stop-input");
 
-    let stopsText = "";
-    let count = 1;
+    // 🔥 CONSTRUIR RUTA A → B → C → D
+    let ruta = `A: ${origen}\n`;
+
+    let letra = 66; // B
 
     stops.forEach(stop => {
         if (stop.value) {
-            stopsText += `Stop ${count}: ${stop.value}\n`;
-            count++;
+            ruta += `${String.fromCharCode(letra)}: ${stop.value}\n`;
+            letra++;
         }
     });
 
+    ruta += `${String.fromCharCode(letra)}: ${destino}`;
+
     const mensaje = 
-`🚐 Booking
+`🚐 *New Booking Request*
 
-Name: ${nombre}
-Phone: ${telefonoCliente}
+👤 Name: ${nombre}
+📞 Phone: ${telefonoCliente}
 
-From: ${lastCalculation.origen}
-${stopsText ? stopsText : ""}To: ${lastCalculation.destino}
+🗺 Route:
+${ruta}
 
-Date: ${fecha}
-Time: ${hora}
+📅 Date: ${fecha}
+⏰ Time: ${hora}
 
-Distance: ${lastCalculation.km.toFixed(1)} km
-ETA: ${lastCalculation.eta}
+🛣 Distance: ${lastCalculation.km.toFixed(1)} km
+🕒 ETA: ${lastCalculation.eta}
 
-Price: $${lastCalculation.price}`;
+💲 Price: $${lastCalculation.price}
+
+Please confirm availability.`;
 
     window.open(`https://wa.me/15615601688?text=${encodeURIComponent(mensaje)}`);
 }
