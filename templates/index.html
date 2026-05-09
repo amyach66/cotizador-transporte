@@ -324,6 +324,19 @@ function handleBooking() {
     const fecha = document.querySelector('[name="fecha"]').value;
     const hora = document.querySelector('[name="hora"]').value;
 
+    // 🔥 CAPTURAR STOPS
+    const stops = document.querySelectorAll(".stop-input");
+
+    let stopsText = "";
+    let count = 1;
+
+    stops.forEach(stop => {
+        if (stop.value) {
+            stopsText += `Stop ${count}: ${stop.value}\n`;
+            count++;
+        }
+    });
+
     const mensaje = 
 `🚐 Booking
 
@@ -331,7 +344,7 @@ Name: ${nombre}
 Phone: ${telefonoCliente}
 
 From: ${lastCalculation.origen}
-To: ${lastCalculation.destino}
+${stopsText ? stopsText : ""}To: ${lastCalculation.destino}
 
 Date: ${fecha}
 Time: ${hora}
