@@ -278,7 +278,7 @@ function handleCalculate() {
 
             price = Math.round(price / 5) * 5;
 
-            lastCalculation = { km, miles, eta, price, origen, destino };
+            lastCalculation = { km, miles, minutes, price, origen, destino };
 
             mostrarResultado(km, minutes, eta, price);
         }
@@ -295,12 +295,22 @@ function mostrarResultado(km, minutos, eta, price) {
     document.getElementById("resultadoBox").innerHTML = `
         <div>Distance: ${dist} mi</div>
         <div>Duration: ${minutos} min</div>
-        <div>Arrival: ${eta}</div>
+        <div>Total Time: ${formatDuration(minutos)}</div>
         <div class="price-label">Your Fare</div>
         <div class="price-value">$${price}</div>
     `;
 }
+function formatDuration(minutos) {
+    const hours = Math.floor(minutos / 60);
+    const mins = minutos % 60;
 
+    let result = "";
+
+    if (hours > 0) result += `${hours}h `;
+    if (mins > 0) result += `${mins} min`;
+
+    return result.trim();
+}
 // =========================
 // BOOKING
 // =========================
@@ -374,7 +384,7 @@ ${ruta}
 ⏰ Time: ${hora}
 
 🛣 Distance: ${lastCalculation.miles.toFixed(1)} mi
-🕒 ETA: ${lastCalculation.eta}
+🕒 Total Time: ${formatDuration(lastCalculation.minutes)}
 
 💲 Price: $${lastCalculation.price}
 
