@@ -272,9 +272,23 @@ function handleCalculate() {
 
     if (!origen || !destino) return;
 
+    const stops = document.querySelectorAll(".stop-input");
+
+    let waypoints = [];
+
+    stops.forEach(function(stop) {
+        if (stop.value) {
+            waypoints.push({
+                location: stop.value,
+                stopover: true
+            });
+        }
+    });
+
     directionsService.route({
         origin: origen,
         destination: destino,
+        waypoints: waypoints, // 🔥 FIX CLAVE
         travelMode: 'DRIVING'
     }, function(result, status) {
 
