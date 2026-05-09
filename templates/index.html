@@ -23,16 +23,13 @@
                     📍 Use my location
                 </button>
 
-                <!-- ORIGEN -->
                 <div class="input-group">
                     <span class="label">A</span>
                     <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
                 </div>
 
-                <!-- STOPS -->
                 <div id="stops-container"></div>
 
-                <!-- DESTINO -->
                 <div class="input-group">
                     <span class="label" id="destino-label">B</span>
                     <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
@@ -40,7 +37,6 @@
 
                 <button type="button" onclick="agregarParada()">➕ Add Stop</button>
 
-                <!-- CLIENT INFO -->
                 <div class="input-group">
                     <input type="text" name="nombre_cliente" placeholder="Your name" required>
                 </div>
@@ -49,37 +45,22 @@
                     <input type="tel" name="telefono_cliente" placeholder="Your phone number" required>
                 </div>
 
-                <!-- DATE -->
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
                     <label style="font-size: 12px; color: #9ca3af;">Select Date</label>
                     <input type="date" name="fecha" required>
                 </div>
 
-                <!-- TIME -->
                 <div class="input-group" style="flex-direction: column; align-items: flex-start;">
                     <label style="font-size: 12px; color: #9ca3af;">Select Time</label>
                     <input type="time" name="hora" required>
                 </div>
 
-                <input type="hidden" name="km_real" id="km_real">
-                <input type="hidden" name="duracion_real" id="duracion_real">
-                <input type="hidden" name="eta_real" id="eta_real">
-
-                <!-- BOTONES -->
                 <button type="button" onclick="handleCalculate()">Calculate Price</button>
                 <button type="button" onclick="handleBooking()">Request Booking</button>
 
             </form>
 
-            {% if precio %}
-            <div class="resultado">
-                <div>Distance: {{ distancia }} mi</div>
-                <div>Duration: {{ duracion }}</div>
-                <div>Arrival: {{ eta if eta else '-' }}</div>   
-                <div class="price-label">Your Fare</div>
-                <div class="price-value">${{ precio }}</div>
-            </div>
-            {% endif %}
+            <div class="resultado" id="resultadoBox"></div>
 
         </div>
 
@@ -125,27 +106,18 @@ window.initMap = function () {
     origenInput.addEventListener("input", calcularRuta);
     destinoInput.addEventListener("input", calcularRuta);
 
-    // 🔥 RECUPERAR STOPS DESDE FLASK
     let stopsFromServer = [];
     try {
         const data = document.getElementById("stops-data").textContent;
         stopsFromServer = JSON.parse(data);
-    } catch (e) {
-        stopsFromServer = [];
-    }
+    } catch (e) {}
 
-    stopsFromServer.forEach(function(valor) {
-        agregarParada(valor);
-    });
-
+    stopsFromServer.forEach(agregarParada);
     actualizarEtiquetas();
 
-    // 🔥 REDIBUJAR RUTA AUTOMÁTICAMENTE DESPUÉS DEL RELOAD
-    setTimeout(function() {
-        if (origenInput.value && destinoInput.value) {
-            calcularRuta();
-        }
-    }, 500);
+    setTimeout(() => {
+        if (origenInput.value && destinoInput.value) calcularRuta();
+    }, 300);
 };
 
 // =========================
@@ -186,7 +158,6 @@ function agregarParada(valor = "") {
     removeBtn.className = "remove-stop";
     removeBtn.innerText = "✕";
 
-    // 🔥 ELIMINAR STOP
     removeBtn.onclick = function() {
         group.remove();
         actualizarEtiquetas();
@@ -203,7 +174,7 @@ function agregarParada(valor = "") {
 
     new google.maps.places.Autocomplete(input);
 
-    input.addEventListener("input", function() {
+    input.addEventListener("input", () => {
         actualizarEtiquetas();
         calcularRuta();
     });
@@ -217,9 +188,8 @@ function agregarParada(valor = "") {
 function actualizarEtiquetas() {
     const stops = document.querySelectorAll("#stops-container .input-group");
 
-    stops.forEach(function(group, index) {
-        group.querySelector(".label").innerText =
-            String.fromCharCode(66 + index);
+    stops.forEach((group, index) => {
+        group.querySelector(".label").innerText = String.fromCharCode(66 + index);
     });
 
     document.getElementById("destino-label").innerText =
@@ -227,7 +197,7 @@ function actualizarEtiquetas() {
 }
 
 // =========================
-// RUTA
+// ROUTE
 // =========================
 function calcularRuta() {
 
@@ -240,12 +210,9 @@ function calcularRuta() {
 
     let waypoints = [];
 
-    stops.forEach(function(stop) {
+    stops.forEach(stop => {
         if (stop.value) {
-            waypoints.push({
-                location: stop.value,
-                stopover: true
-            });
+            waypoints.push({ location: stop.value, stopover: true });
         }
     });
 
@@ -255,15 +222,12 @@ function calcularRuta() {
         waypoints: waypoints,
         travelMode: 'DRIVING'
     }, function(result, status) {
-
-        if (status === 'OK') {
-            directionsRenderer.setDirections(result);
-        }
+        if (status === 'OK') directionsRenderer.setDirections(result);
     });
 }
 
 // =========================
-// CALCULATE
+// CALCULATE (SIN RECARGA)
 // =========================
 function handleCalculate() {
 
@@ -276,19 +240,16 @@ function handleCalculate() {
 
     let waypoints = [];
 
-    stops.forEach(function(stop) {
+    stops.forEach(stop => {
         if (stop.value) {
-            waypoints.push({
-                location: stop.value,
-                stopover: true
-            });
+            waypoints.push({ location: stop.value, stopover: true });
         }
     });
 
     directionsService.route({
         origin: origen,
         destination: destino,
-        waypoints: waypoints, // 🔥 FIX CLAVE
+        waypoints: waypoints,
         travelMode: 'DRIVING'
     }, function(result, status) {
 
@@ -297,28 +258,55 @@ function handleCalculate() {
             let totalKm = 0;
             let totalMin = 0;
 
-            result.routes[0].legs.forEach(function(leg) {
+            result.routes[0].legs.forEach(leg => {
                 totalKm += leg.distance.value;
                 totalMin += leg.duration.value;
             });
 
             const km = totalKm / 1000;
-            const totalMinutes = Math.round(totalMin / 60);
+            const minutes = Math.round(totalMin / 60);
 
             const now = new Date();
-            now.setMinutes(now.getMinutes() + totalMinutes);
+            now.setMinutes(now.getMinutes() + minutes);
 
-            let eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
-            document.getElementById("km_real").value = km;
-            document.getElementById("duracion_real").value = totalMinutes + " min";
-            document.getElementById("eta_real").value = eta;
+            // pricing igual backend
+            let price = 75;
 
-            lastCalculation = { km, eta };
+            if (km > 5) {
+                let extra = km - 5;
+                if (extra <= 95) price += extra * 2.40;
+                else if (extra <= 195) price += (95*2.40) + (extra-95)*3;
+                else if (extra <= 295) price += (95*2.40)+(100*3)+(extra-195)*3.5;
+                else price += (95*2.40)+(100*3)+(100*3.5)+(extra-295)*4;
+            }
 
-            document.getElementById("quoteForm").submit();
+            if (minutes > 60) price += (minutes - 60) * 0.5;
+
+            price = Math.round(price / 5) * 5;
+
+            lastCalculation = { km, eta, price, origen, destino };
+
+            mostrarResultado(km, minutes, eta, price);
         }
     });
+}
+
+// =========================
+// UI RESULT
+// =========================
+function mostrarResultado(km, minutos, eta, price) {
+
+    let dist = (km * 0.621371).toFixed(1);
+
+    document.getElementById("resultadoBox").innerHTML = `
+        <div>Distance: ${dist} mi</div>
+        <div>Duration: ${minutos} min</div>
+        <div>Arrival: ${eta}</div>
+        <div class="price-label">Your Fare</div>
+        <div class="price-value">$${price}</div>
+    `;
 }
 
 // =========================
@@ -327,7 +315,7 @@ function handleCalculate() {
 function handleBooking() {
 
     if (!lastCalculation) {
-        alert("Please calculate price first");
+        alert("Calculate price first");
         return;
     }
 
@@ -337,26 +325,23 @@ function handleBooking() {
     const hora = document.querySelector('[name="hora"]').value;
 
     const mensaje = 
-`🚐 *New Booking Request*
+`🚐 Booking
 
-👤 Name: ${nombre}
-📞 Phone: ${telefonoCliente}
+Name: ${nombre}
+Phone: ${telefonoCliente}
 
-📅 Date: ${fecha}
-⏰ Time: ${hora}
+From: ${lastCalculation.origen}
+To: ${lastCalculation.destino}
 
-🛣 Distance: ${lastCalculation.km.toFixed(1)} km
-🕒 ETA: ${lastCalculation.eta}
+Date: ${fecha}
+Time: ${hora}
 
-💲 Price shown on screen
+Distance: ${lastCalculation.km.toFixed(1)} km
+ETA: ${lastCalculation.eta}
 
-Please confirm availability.`;
+Price: $${lastCalculation.price}`;
 
-    const telefono = "15615601688";
-
-    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
-
-    window.open(url, "_blank");
+    window.open(`https://wa.me/15615601688?text=${encodeURIComponent(mensaje)}`);
 }
 </script>
 
