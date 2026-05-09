@@ -218,7 +218,7 @@ function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
-    const miles = km * 0.621371;
+    
 
     if (!origen || !destino) return;
 
@@ -251,6 +251,8 @@ function handleCalculate() {
 
             const km = totalKm / 1000;
             const minutes = Math.round(totalMin / 60);
+            // 🔥 AQUÍ VA (correcto)
+            const miles = km * 0.621371;
 
             const now = new Date();
             now.setMinutes(now.getMinutes() + minutes);
@@ -288,7 +290,7 @@ function handleCalculate() {
 // =========================
 function mostrarResultado(km, minutos, eta, price) {
 
-    let dist = miles.toFixed(1);
+    let dist = (km * 0.621371).toFixed(1);
 
     document.getElementById("resultadoBox").innerHTML = `
         <div>Distance: ${dist} mi</div>
