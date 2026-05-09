@@ -218,6 +218,7 @@ function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
+    const miles = km * 0.621371;
 
     if (!origen || !destino) return;
 
@@ -254,7 +255,11 @@ function handleCalculate() {
             const now = new Date();
             now.setMinutes(now.getMinutes() + minutes);
 
-            const eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const eta = now.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                 minute: '2-digit',
+                  hour12: true
+            });
 
             // pricing igual backend
             let price = 75;
@@ -271,7 +276,7 @@ function handleCalculate() {
 
             price = Math.round(price / 5) * 5;
 
-            lastCalculation = { km, eta, price, origen, destino };
+            lastCalculation = { km, miles, eta, price, origen, destino };
 
             mostrarResultado(km, minutes, eta, price);
         }
@@ -283,7 +288,7 @@ function handleCalculate() {
 // =========================
 function mostrarResultado(km, minutos, eta, price) {
 
-    let dist = (km * 0.621371).toFixed(1);
+    let dist = miles.toFixed(1);
 
     document.getElementById("resultadoBox").innerHTML = `
         <div>Distance: ${dist} mi</div>
@@ -366,7 +371,7 @@ ${ruta}
 📅 Date: ${fecha}
 ⏰ Time: ${hora}
 
-🛣 Distance: ${lastCalculation.km.toFixed(1)} km
+🛣 Distance: ${lastCalculation.miles.toFixed(1)} mi
 🕒 ETA: ${lastCalculation.eta}
 
 💲 Price: $${lastCalculation.price}
