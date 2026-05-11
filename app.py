@@ -108,15 +108,11 @@ def index():
 
     return render_template(
         "index.html",
-        precio=precio,
-        distancia=distancia,
-        duracion=duracion,
-        eta=eta,
-        error=error,
-        origen=origen,
-        destino=destino,
-        tipo=tipo,
-        stops=stops
+    precio=precio,
+    distancia=distancia,
+    duracion=duracion,
+    eta=eta,
+    error=error
     )
 
 
