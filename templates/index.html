@@ -19,17 +19,17 @@
 
             <form method="POST" id="quoteForm">
 
-
+                <!-- 🔥 SIN value="{{ }}" -->
                 <div class="input-group">
                     <span class="label">A</span>
-                    <input id="origen" name="origen" value="{{ origen }}" placeholder="Pickup location" required>
+                    <input id="origen" name="origen" placeholder="Pickup location" required>
                 </div>
 
                 <div id="stops-container"></div>
 
                 <div class="input-group">
                     <span class="label" id="destino-label">B</span>
-                    <input id="destino" name="destino" value="{{ destino }}" placeholder="Dropoff location" required>
+                    <input id="destino" name="destino" placeholder="Dropoff location" required>
                 </div>
 
                 <button type="button" onclick="agregarParada()">➕ Add Stop</button>
@@ -68,13 +68,21 @@
     </div>
 </div>
 
-<script id="stops-data" type="application/json">
-{{ stops | default([]) | tojson }}
-</script>
-
 <script>
 let map, directionsService, directionsRenderer;
 let lastCalculation = null;
+
+// =========================
+// RESET TOTAL AL CARGAR
+// =========================
+window.addEventListener("load", function () {
+
+    document.getElementById("quoteForm").reset();
+    document.getElementById("stops-container").innerHTML = "";
+    document.getElementById("resultadoBox").innerHTML = "";
+
+    lastCalculation = null;
+});
 
 // =========================
 // INIT MAP
@@ -102,19 +110,6 @@ window.initMap = function () {
 
     origenInput.addEventListener("input", calcularRuta);
     destinoInput.addEventListener("input", calcularRuta);
-
-    let stopsFromServer = [];
-    try {
-        const data = document.getElementById("stops-data").textContent;
-        stopsFromServer = JSON.parse(data);
-    } catch (e) {}
-
-    stopsFromServer.forEach(agregarParada);
-    actualizarEtiquetas();
-
-    setTimeout(() => {
-        if (origenInput.value && destinoInput.value) calcularRuta();
-    }, 300);
 };
 
 // =========================
@@ -212,13 +207,12 @@ function calcularRuta() {
 }
 
 // =========================
-// CALCULATE (SIN RECARGA)
+// CALCULATE
 // =========================
 function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
-    
 
     if (!origen || !destino) return;
 
@@ -251,19 +245,8 @@ function handleCalculate() {
 
             const km = totalKm / 1000;
             const minutes = Math.round(totalMin / 60);
-            // 🔥 AQUÍ VA (correcto)
             const miles = km * 0.621371;
 
-            const now = new Date();
-            now.setMinutes(now.getMinutes() + minutes);
-
-            const eta = now.toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                 minute: '2-digit',
-                  hour12: true
-            });
-
-            // pricing igual backend
             let price = 75;
 
             if (km > 5) {
@@ -278,44 +261,44 @@ function handleCalculate() {
 
             price = Math.round(price / 5) * 5;
 
-            lastCalculation = { km, miles, minutes, price, origen, destino };
+            lastCalculation = { km, miles, minutes, price };
 
-            mostrarResultado(km, minutes, eta, price);
+            mostrarResultado(km, minutes, price);
         }
     });
 }
 
 // =========================
-// UI RESULT
+// RESULT
 // =========================
-function mostrarResultado(km, minutos, eta, price) {
+function mostrarResultado(km, minutos, price) {
 
     let dist = (km * 0.621371).toFixed(1);
 
-   document.getElementById("resultadoBox").innerHTML = `
-    <div>Distance: ${dist} mi</div>
-    <div>Duration: ${formatDuration(minutos)}</div>
-    <div class="price-label">Your Fare</div>
-    <div class="price-value">$${price}</div>
-`;
+    document.getElementById("resultadoBox").innerHTML = `
+        <div>Distance: ${dist} mi</div>
+        <div>Duration: ${formatDuration(minutos)}</div>
+        <div class="price-label">Your Fare</div>
+        <div class="price-value">$${price}</div>
+    `;
 }
+
 function formatDuration(minutos) {
     const hours = Math.floor(minutos / 60);
     const mins = minutos % 60;
 
     let result = "";
-
     if (hours > 0) result += `${hours}h `;
     if (mins > 0) result += `${mins} min`;
 
     return result.trim();
 }
+
 // =========================
 // BOOKING
 // =========================
 function handleBooking() {
 
-    // 🔥 validar cálculo
     if (!lastCalculation) {
         alert("Please calculate price first");
         return;
@@ -329,33 +312,11 @@ function handleBooking() {
     const origen = document.getElementById("origen").value.trim();
     const destino = document.getElementById("destino").value.trim();
 
-    // 🔥 VALIDACIONES (SIN ROMPER TU UX)
-    if (!nombre) {
-        alert("Please enter your name");
+    if (!nombre || !telefonoCliente || !fecha || !hora || !origen || !destino) {
+        alert("Please complete all fields");
         return;
     }
 
-    if (!telefonoCliente) {
-        alert("Please enter your phone number");
-        return;
-    }
-
-    if (!fecha) {
-        alert("Please select a date");
-        return;
-    }
-
-    if (!hora) {
-        alert("Please select a time");
-        return;
-    }
-
-    if (!origen || !destino) {
-        alert("Please enter pickup and dropoff locations");
-        return;
-    }
-
-    // 🔥 CAPTURAR STOPS (igual que ya lo haces)
     const stops = document.querySelectorAll(".stop-input");
 
     let ruta = `A: ${origen}\n`;

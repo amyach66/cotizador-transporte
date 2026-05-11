@@ -218,6 +218,7 @@ function handleCalculate() {
 
     const origen = document.getElementById("origen").value;
     const destino = document.getElementById("destino").value;
+    
 
     if (!origen || !destino) return;
 
@@ -250,11 +251,17 @@ function handleCalculate() {
 
             const km = totalKm / 1000;
             const minutes = Math.round(totalMin / 60);
+            // 🔥 AQUÍ VA (correcto)
+            const miles = km * 0.621371;
 
             const now = new Date();
             now.setMinutes(now.getMinutes() + minutes);
 
-            const eta = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const eta = now.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                 minute: '2-digit',
+                  hour12: true
+            });
 
             // pricing igual backend
             let price = 75;
@@ -271,7 +278,7 @@ function handleCalculate() {
 
             price = Math.round(price / 5) * 5;
 
-            lastCalculation = { km, eta, price, origen, destino };
+            lastCalculation = { km, miles, minutes, price, origen, destino };
 
             mostrarResultado(km, minutes, eta, price);
         }
@@ -285,39 +292,74 @@ function mostrarResultado(km, minutos, eta, price) {
 
     let dist = (km * 0.621371).toFixed(1);
 
-    document.getElementById("resultadoBox").innerHTML = `
-        <div>Distance: ${dist} mi</div>
-        <div>Duration: ${minutos} min</div>
-        <div>Arrival: ${eta}</div>
-        <div class="price-label">Your Fare</div>
-        <div class="price-value">$${price}</div>
-    `;
+   document.getElementById("resultadoBox").innerHTML = `
+    <div>Distance: ${dist} mi</div>
+    <div>Duration: ${formatDuration(minutos)}</div>
+    <div class="price-label">Your Fare</div>
+    <div class="price-value">$${price}</div>
+`;
 }
+function formatDuration(minutos) {
+    const hours = Math.floor(minutos / 60);
+    const mins = minutos % 60;
 
+    let result = "";
+
+    if (hours > 0) result += `${hours}h `;
+    if (mins > 0) result += `${mins} min`;
+
+    return result.trim();
+}
 // =========================
 // BOOKING
 // =========================
 function handleBooking() {
 
+    // 🔥 validar cálculo
     if (!lastCalculation) {
-        alert("Calculate price first");
+        alert("Please calculate price first");
         return;
     }
 
-    const nombre = document.querySelector('[name="nombre_cliente"]').value;
-    const telefonoCliente = document.querySelector('[name="telefono_cliente"]').value;
+    const nombre = document.querySelector('[name="nombre_cliente"]').value.trim();
+    const telefonoCliente = document.querySelector('[name="telefono_cliente"]').value.trim();
     const fecha = document.querySelector('[name="fecha"]').value;
     const hora = document.querySelector('[name="hora"]').value;
 
-    const origen = document.getElementById("origen").value;
-    const destino = document.getElementById("destino").value;
+    const origen = document.getElementById("origen").value.trim();
+    const destino = document.getElementById("destino").value.trim();
 
+    // 🔥 VALIDACIONES (SIN ROMPER TU UX)
+    if (!nombre) {
+        alert("Please enter your name");
+        return;
+    }
+
+    if (!telefonoCliente) {
+        alert("Please enter your phone number");
+        return;
+    }
+
+    if (!fecha) {
+        alert("Please select a date");
+        return;
+    }
+
+    if (!hora) {
+        alert("Please select a time");
+        return;
+    }
+
+    if (!origen || !destino) {
+        alert("Please enter pickup and dropoff locations");
+        return;
+    }
+
+    // 🔥 CAPTURAR STOPS (igual que ya lo haces)
     const stops = document.querySelectorAll(".stop-input");
 
-    // 🔥 CONSTRUIR RUTA A → B → C → D
     let ruta = `A: ${origen}\n`;
-
-    let letra = 66; // B
+    let letra = 66;
 
     stops.forEach(stop => {
         if (stop.value) {
@@ -340,8 +382,8 @@ ${ruta}
 📅 Date: ${fecha}
 ⏰ Time: ${hora}
 
-🛣 Distance: ${lastCalculation.km.toFixed(1)} km
-🕒 ETA: ${lastCalculation.eta}
+🛣 Distance: ${lastCalculation.miles.toFixed(1)} mi
+🕒 Total Time: ${formatDuration(lastCalculation.minutes)}
 
 💲 Price: $${lastCalculation.price}
 
