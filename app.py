@@ -106,8 +106,20 @@ def index():
             except Exception as e:
                 error = "Calculation error"
 
-    return render_template("index.html"),
-   
+    return render_template(
+        "index.html",
+        precio=precio,
+        distancia=distancia,
+        duracion=duracion,
+        eta=eta,
+        error=error,
+        origen=origen,
+        destino=destino,
+        tipo=tipo,
+        stops=stops
+    )
+
+
 # 🔥 DEBUG ERROR EN PRODUCCIÓN (TE SALVA LA VIDA)
 @app.errorhandler(500)
 def error_500(e):
