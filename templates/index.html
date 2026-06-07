@@ -264,18 +264,33 @@ function handleCalculate() {
                   hour12: true
             });
 
-            // pricing igual backend
+            // pricing EXACTAMENTE IGUAL A PYTHON
             let price = 75;
 
             if (km > 5) {
+
                 let extra = km - 5;
-                if (extra <= 95) price += extra * 2.40;
-                else if (extra <= 195) price += (95*2.40) + (extra-95)*3;
-                else if (extra <= 295) price += (95*2.40)+(100*3)+(extra-195)*3.5;
-                else price += (95*2.40)+(100*3)+(100*3.5)+(extra-295)*4;
+
+                if (extra <= 95) {
+                    price += extra * 1.50;
+                } else if (extra <= 195) {
+                    price += (95 * 1.50);
+                    price += (extra - 95) * 2.00;
+                } else if (extra <= 295) {
+                    price += (95 * 1.50);
+                    price += (100 * 2.00);
+                    price += (extra - 195) * 2.50;
+                } else {
+                    price += (95 * 1.50);
+                    price += (100 * 2.00);
+                    price += (100 * 2.50);
+                    price += (extra - 295) * 3.00;
+                }
             }
 
-            if (minutes > 60) price += (minutes - 60) * 0.5;
+            if (minutes > 60) {
+                price += (minutes - 60) * 0.5;
+            }
 
             price = Math.round(price / 5) * 5;
 
