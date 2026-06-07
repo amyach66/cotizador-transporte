@@ -26,10 +26,10 @@ def calcular_precio_business(km):
 def calcular_precio_van(km):
     tiers = [
         (0, 5, 0),
-        (5, 100, 2.40),
-        (100, 200, 3.00),
-        (200, 300, 3.50),
-        (300, 5000, 4.00)
+        (5, 100, 1.80),
+        (100, 200, 2.00),
+        (200, 300, 2.50),
+        (300, 5000, 3.00)
     ]
     total = calcular_tiers(km, tiers)
     return max(total + 75, 75)
