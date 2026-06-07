@@ -272,19 +272,19 @@ function handleCalculate() {
                 let extra = km - 5;
 
                 if (extra <= 95) {
-                    price += extra * 1.50;
+                    price += extra * 1.30;
                 } else if (extra <= 195) {
-                    price += (95 * 1.50);
-                    price += (extra - 95) * 2.00;
+                    price += (95 * 1.30);
+                    price += (extra - 95) * 1.80;
                 } else if (extra <= 295) {
-                    price += (95 * 1.50);
-                    price += (100 * 2.00);
-                    price += (extra - 195) * 2.50;
+                    price += (95 * 1.30);
+                    price += (100 * 1.80);
+                    price += (extra - 195) * 2.00;
                 } else {
-                    price += (95 * 1.50);
+                    price += (95 * 1.30);
+                    price += (100 * 1.80);
                     price += (100 * 2.00);
-                    price += (100 * 2.50);
-                    price += (extra - 295) * 3.00;
+                    price += (extra - 295) * 2.50;
                 }
             }
 
